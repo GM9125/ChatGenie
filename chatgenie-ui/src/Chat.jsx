@@ -13,6 +13,16 @@ const TYPING_TIMEOUT = 3000;
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000;
 
+// New Animated Icon Component
+const AnimatedIcon = () => (
+  <div className="animated-icon-wrapper">
+    <div className="animated-icon-3d">
+      <div className="sparkle-star">✨</div>
+      <div className="glow-effect"></div>
+    </div>
+  </div>
+);
+
 export default function Chat() {
   const [messages, setMessages] = useState(() => {
     const saved = localStorage.getItem('chatMessages');
@@ -141,49 +151,69 @@ export default function Chat() {
     }
   };
 
-  const MessageBubble = ({ message }) => (
-    <div className="message-container">
-      <div className={`message ${message.isUser ? 'user-message' : 'bot-message'}`}>
-        <div className="message-header">
-          <span className="message-icon">
-            {message.isUser ? '👤' : '🤖'}
-          </span>
-          <span className="message-time">
-            {new Date(message.timestamp).toLocaleTimeString()}
-          </span>
-        </div>
-        <div className="message-text">
-          {message.isUser ? (
-            message.text
-          ) : (
-            <ReactMarkdown
-              remarkPlugins={[remarkMath, remarkGfm]}
-              rehypePlugins={[rehypeKatex, rehypeHighlight]}
-              components={{
-                h1: ({node, ...props}) => <h1 className="md-h1" {...props} />,
-                h2: ({node, ...props}) => <h2 className="md-h2" {...props} />,
-                h3: ({node, ...props}) => <h3 className="md-h3" {...props} />,
-                p: ({node, ...props}) => <p className="md-p" {...props} />,
-                ul: ({node, ...props}) => <ul className="md-ul" {...props} />,
-                ol: ({node, ...props}) => <ol className="md-ol" {...props} />,
-                li: ({node, ...props}) => <li className="md-li" {...props} />,
-                code: ({node, inline, ...props}) => 
-                  inline ? <code className="md-inline-code" {...props} /> 
-                        : <code className="md-code-block" {...props} />,
-                pre: ({node, ...props}) => <pre className="md-pre" {...props} />,
-                blockquote: ({node, ...props}) => <blockquote className="md-blockquote" {...props} />,
-                table: ({node, ...props}) => <table className="md-table" {...props} />,
-                th: ({node, ...props}) => <th className="md-th" {...props} />,
-                td: ({node, ...props}) => <td className="md-td" {...props} />
-              }}
-            >
-              {message.text}
-            </ReactMarkdown>
-          )}
+  const MessageBubble = ({ message }) => {
+    const [isCodeLoaded, setIsCodeLoaded] = useState(false);
+
+    useEffect(() => {
+      setIsCodeLoaded(true);
+    }, []);
+
+    return (
+      <div className="message-container">
+        <div className={`message ${message.isUser ? 'user-message' : 'bot-message'}`}>
+          <div className="message-header">
+            <span className="message-icon">
+              {message.isUser ? '👤' : '🤖'}
+            </span>
+            <span className="message-time">
+              {new Date(message.timestamp).toLocaleTimeString()}
+            </span>
+          </div>
+          <div className="message-text">
+            {message.isUser ? (
+              message.text
+            ) : (
+              <ReactMarkdown
+                remarkPlugins={[remarkMath, remarkGfm]}
+                rehypePlugins={[rehypeKatex, rehypeHighlight]}
+                components={{
+                  h1: ({node, ...props}) => <h1 className="md-h1" {...props} />,
+                  h2: ({node, ...props}) => <h2 className="md-h2" {...props} />,
+                  h3: ({node, ...props}) => <h3 className="md-h3" {...props} />,
+                  p: ({node, ...props}) => <p className="md-p" {...props} />,
+                  ul: ({node, ...props}) => <ul className="md-ul" {...props} />,
+                  ol: ({node, ...props}) => <ol className="md-ol" {...props} />,
+                  li: ({node, ...props}) => <li className="md-li" {...props} />,
+                  code: ({node, inline, className, children, ...props}) => 
+                    inline ? (
+                      <code className="md-inline-code" {...props}>
+                        {children}
+                      </code>
+                    ) : (
+                      <code 
+                        className={`md-code-block ${isCodeLoaded ? 'loaded' : ''} ${className || ''}`}
+                        {...props}
+                      >
+                        {children}
+                      </code>
+                    ),
+                  pre: ({node, ...props}) => (
+                    <pre className="md-pre pre-highlight" {...props} />
+                  ),
+                  blockquote: ({node, ...props}) => <blockquote className="md-blockquote" {...props} />,
+                  table: ({node, ...props}) => <table className="md-table" {...props} />,
+                  th: ({node, ...props}) => <th className="md-th" {...props} />,
+                  td: ({node, ...props}) => <td className="md-td" {...props} />
+                }}
+              >
+                {message.text}
+              </ReactMarkdown>
+            )}
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div className="main-container">
@@ -206,7 +236,7 @@ export default function Chat() {
             </button>
           </div>
           <div className="header-title">
-            <span className="header-icon">✨</span>
+            <AnimatedIcon />
             <span>ChatGenie</span>
           </div>
         </div>
@@ -262,7 +292,7 @@ export default function Chat() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Message ChatGenie..."
+              placeholder="Message ChatGenie"
               className="message-input"
               disabled={isLoading}
               rows="1"
