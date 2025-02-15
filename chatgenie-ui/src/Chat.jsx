@@ -1,5 +1,11 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { throttle } from 'lodash';
+import ReactMarkdown from 'react-markdown';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import rehypeHighlight from 'rehype-highlight';
+import 'katex/dist/katex.min.css';
+import 'highlight.js/styles/github-dark.css';
 
 const TYPING_TIMEOUT = 3000;
 const MAX_RETRIES = 3;
@@ -17,7 +23,6 @@ export default function Chat() {
   const textareaRef = useRef(null);
   const messagesAreaRef = useRef(null);
   const [isAtBottom, setIsAtBottom] = useState(true);
-  const [unreadMessages, setUnreadMessages] = useState(0);
 
   useEffect(() => {
     localStorage.setItem('chatMessages', JSON.stringify(messages));
@@ -30,8 +35,6 @@ export default function Chat() {
       const { scrollHeight, scrollTop, clientHeight } = messagesAreaRef.current;
       const bottom = Math.abs(scrollHeight - scrollTop - clientHeight) < 50;
       setIsAtBottom(bottom);
-      
-      if (bottom) setUnreadMessages(0);
     }, 100),
     []
   );
@@ -47,8 +50,6 @@ export default function Chat() {
   const scrollToBottom = useCallback(() => {
     if (isAtBottom) {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    } else {
-      setUnreadMessages(prev => prev + 1);
     }
   }, [isAtBottom]);
 
@@ -132,7 +133,35 @@ export default function Chat() {
           {new Date(message.timestamp).toLocaleTimeString()}
         </span>
       </div>
-      <div className="message-text">{message.text}</div>
+      <div className="message-text">
+        {message.isUser ? (
+          message.text
+        ) : (
+          <ReactMarkdown
+            remarkPlugins={[remarkMath]}
+            rehypePlugins={[rehypeKatex, rehypeHighlight]}
+            components={{
+              h1: ({node, ...props}) => <h1 className="md-h1" {...props} />,
+              h2: ({node, ...props}) => <h2 className="md-h2" {...props} />,
+              h3: ({node, ...props}) => <h3 className="md-h3" {...props} />,
+              p: ({node, ...props}) => <p className="md-p" {...props} />,
+              ul: ({node, ...props}) => <ul className="md-ul" {...props} />,
+              ol: ({node, ...props}) => <ol className="md-ol" {...props} />,
+              li: ({node, ...props}) => <li className="md-li" {...props} />,
+              code: ({node, inline, ...props}) => 
+                inline ? <code className="md-inline-code" {...props} /> 
+                      : <code className="md-code-block" {...props} />,
+              pre: ({node, ...props}) => <pre className="md-pre" {...props} />,
+              blockquote: ({node, ...props}) => <blockquote className="md-blockquote" {...props} />,
+              table: ({node, ...props}) => <table className="md-table" {...props} />,
+              th: ({node, ...props}) => <th className="md-th" {...props} />,
+              td: ({node, ...props}) => <td className="md-td" {...props} />
+            }}
+          >
+            {message.text}
+          </ReactMarkdown>
+        )}
+      </div>
     </div>
   );
 
@@ -186,18 +215,6 @@ export default function Chat() {
           <div className="error-alert">
             {error}
           </div>
-        )}
-
-        {!isAtBottom && unreadMessages > 0 && (
-          <button
-            className="new-messages-indicator"
-            onClick={() => {
-              messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-              setUnreadMessages(0);
-            }}
-          >
-            {unreadMessages} new message{unreadMessages > 1 ? 's' : ''}
-          </button>
         )}
 
         <div className="input-area">

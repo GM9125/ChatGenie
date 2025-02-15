@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code&display=swap');
 
 :root {
   --primary-color: #6c5ce7;
@@ -117,6 +118,8 @@ body {
 
 .message-text {
   white-space: pre-wrap;
+  font-size: 0.95rem;
+  line-height: 1.6;
 }
 
 .user-message {
@@ -129,6 +132,7 @@ body {
   background: rgba(255, 255, 255, 0.1);
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
   transform: translateZ(5px);
+  padding: 1.25rem;
 }
 
 .welcome-message {
@@ -234,28 +238,127 @@ body {
   animation: bounce 1.4s infinite;
 }
 
-.dot:nth-child(2) {
-  animation-delay: 0.2s;
+.dot:nth-child(2) { animation-delay: 0.2s; }
+.dot:nth-child(3) { animation-delay: 0.4s; }
+
+.error-alert {
+  background-color: rgba(220, 38, 38, 0.1);
+  border: 1px solid rgba(220, 38, 38, 0.2);
+  color: #fee2e2;
+  padding: 0.75rem 1rem;
+  margin: 0.5rem 1rem;
+  border-radius: 8px;
+  animation: slideIn 0.3s ease-out;
 }
 
-.dot:nth-child(3) {
-  animation-delay: 0.4s;
+/* Markdown Styles */
+.md-h1, .md-h2, .md-h3 {
+  color: #fff;
+  margin: 1rem 0 0.5rem;
+  font-weight: 600;
+  line-height: 1.4;
 }
 
-.new-messages-indicator {
-  position: fixed;
-  bottom: 120px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
-  color: white;
-  padding: 0.75rem 1.5rem;
-  border-radius: 9999px;
-  border: none;
-  cursor: pointer;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-  animation: slideUp 0.3s ease-out;
-  z-index: 20;
+.md-h1 { 
+  font-size: 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 0.5rem;
+}
+
+.md-h2 { font-size: 1.3rem; }
+.md-h3 { font-size: 1.1rem; }
+
+.md-p {
+  margin: 0.75rem 0;
+  line-height: 1.6;
+}
+
+.md-ul, .md-ol {
+  margin: 0.75rem 0;
+  padding-left: 1.5rem;
+}
+
+.md-li {
+  margin: 0.5rem 0;
+  line-height: 1.5;
+}
+
+.md-inline-code {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.9em;
+  color: #a5b4fc;
+}
+
+.md-code-block {
+  display: block;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 1rem;
+  margin: 0.75rem 0;
+  border-radius: 8px;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.9em;
+  white-space: pre-wrap;
+  overflow-x: auto;
+  color: #e5e7eb;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.md-pre {
+  margin: 0;
+  background: transparent;
+}
+
+.md-blockquote {
+  border-left: 4px solid var(--primary-color);
+  margin: 1rem 0;
+  padding: 0.5rem 0 0.5rem 1rem;
+  color: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 0 8px 8px 0;
+  font-style: italic;
+}
+
+.md-table {
+  width: 100%;
+  margin: 1rem 0;
+  border-collapse: collapse;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.md-th, .md-td {
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border-color);
+  text-align: left;
+}
+
+.md-th {
+  background: rgba(255, 255, 255, 0.1);
+  font-weight: 600;
+}
+
+/* Math Equations */
+.katex-display {
+  margin: 1rem 0 !important;
+  padding: 0.5rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.katex {
+  font-size: 1.1em !important;
+  color: #fff;
+}
+
+.katex-inline {
+  padding: 0 0.2em;
 }
 
 /* Animations */
@@ -281,22 +384,18 @@ body {
 }
 
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
-@keyframes slideUp {
+@keyframes slideIn {
   from {
     opacity: 0;
-    transform: translate(-50%, 20px);
+    transform: translateY(-10px);
   }
   to {
     opacity: 1;
-    transform: translate(-50%, 0);
+    transform: translateY(0);
   }
 }
 
@@ -334,7 +433,7 @@ body {
   }
 
   .message-input {
-    font-size: 16px; /* Prevent zoom on iOS */
+    font-size: 16px;
   }
 }
 
@@ -367,24 +466,3 @@ body {
     scroll-behavior: auto !important;
   }
 }
-.error-alert {
-    background-color: rgba(220, 38, 38, 0.1);
-    border: 1px solid rgba(220, 38, 38, 0.2);
-    color: #fee2e2;
-    padding: 0.75rem 1rem;
-    margin: 0.5rem 1rem;
-    border-radius: 8px;
-    animation: slideIn 0.3s ease-out;
-  }
-  
-  @keyframes slideIn {
-    from {
-      opacity: 0;
-      transform: translateY(-10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-  
