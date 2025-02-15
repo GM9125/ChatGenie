@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 import google.generativeai as genai
 from dotenv import load_dotenv
 import os
+from flask_cors import CORS  # Import CORS
 
 # Load environment variables
 load_dotenv()
@@ -18,6 +19,7 @@ chat = model.start_chat(history=[])
 
 # Create Flask app
 app = Flask(__name__)
+CORS(app)  # Enable CORS for all routes
 
 @app.route('/chat', methods=['POST'])
 def chat_endpoint():
