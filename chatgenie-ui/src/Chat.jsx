@@ -2,8 +2,10 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { throttle } from 'lodash';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
+import remarkGfm from 'remark-gfm';
 import rehypeKatex from 'rehype-katex';
 import rehypeHighlight from 'rehype-highlight';
+import { RiDeleteBin6Line, RiChat1Line, RiSendPlaneFill } from 'react-icons/ri';
 import 'katex/dist/katex.min.css';
 import 'highlight.js/styles/github-dark.css';
 
@@ -85,6 +87,22 @@ export default function Chat() {
     }
   };
 
+  const handleClearChat = () => {
+    if (window.confirm('Are you sure you want to clear the chat history?')) {
+      setMessages([]);
+      localStorage.removeItem('chatMessages');
+    }
+  };
+
+  const handleNewChat = () => {
+    if (messages.length > 0) {
+      if (window.confirm('Start a new chat? This will clear the current conversation.')) {
+        setMessages([]);
+        localStorage.removeItem('chatMessages');
+      }
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
@@ -124,43 +142,45 @@ export default function Chat() {
   };
 
   const MessageBubble = ({ message }) => (
-    <div className={`message ${message.isUser ? 'user-message' : 'bot-message'}`}>
-      <div className="message-header">
-        <span className="message-icon">
-          {message.isUser ? '👤' : '🤖'}
-        </span>
-        <span className="message-time">
-          {new Date(message.timestamp).toLocaleTimeString()}
-        </span>
-      </div>
-      <div className="message-text">
-        {message.isUser ? (
-          message.text
-        ) : (
-          <ReactMarkdown
-            remarkPlugins={[remarkMath]}
-            rehypePlugins={[rehypeKatex, rehypeHighlight]}
-            components={{
-              h1: ({node, ...props}) => <h1 className="md-h1" {...props} />,
-              h2: ({node, ...props}) => <h2 className="md-h2" {...props} />,
-              h3: ({node, ...props}) => <h3 className="md-h3" {...props} />,
-              p: ({node, ...props}) => <p className="md-p" {...props} />,
-              ul: ({node, ...props}) => <ul className="md-ul" {...props} />,
-              ol: ({node, ...props}) => <ol className="md-ol" {...props} />,
-              li: ({node, ...props}) => <li className="md-li" {...props} />,
-              code: ({node, inline, ...props}) => 
-                inline ? <code className="md-inline-code" {...props} /> 
-                      : <code className="md-code-block" {...props} />,
-              pre: ({node, ...props}) => <pre className="md-pre" {...props} />,
-              blockquote: ({node, ...props}) => <blockquote className="md-blockquote" {...props} />,
-              table: ({node, ...props}) => <table className="md-table" {...props} />,
-              th: ({node, ...props}) => <th className="md-th" {...props} />,
-              td: ({node, ...props}) => <td className="md-td" {...props} />
-            }}
-          >
-            {message.text}
-          </ReactMarkdown>
-        )}
+    <div className="message-container">
+      <div className={`message ${message.isUser ? 'user-message' : 'bot-message'}`}>
+        <div className="message-header">
+          <span className="message-icon">
+            {message.isUser ? '👤' : '🤖'}
+          </span>
+          <span className="message-time">
+            {new Date(message.timestamp).toLocaleTimeString()}
+          </span>
+        </div>
+        <div className="message-text">
+          {message.isUser ? (
+            message.text
+          ) : (
+            <ReactMarkdown
+              remarkPlugins={[remarkMath, remarkGfm]}
+              rehypePlugins={[rehypeKatex, rehypeHighlight]}
+              components={{
+                h1: ({node, ...props}) => <h1 className="md-h1" {...props} />,
+                h2: ({node, ...props}) => <h2 className="md-h2" {...props} />,
+                h3: ({node, ...props}) => <h3 className="md-h3" {...props} />,
+                p: ({node, ...props}) => <p className="md-p" {...props} />,
+                ul: ({node, ...props}) => <ul className="md-ul" {...props} />,
+                ol: ({node, ...props}) => <ol className="md-ol" {...props} />,
+                li: ({node, ...props}) => <li className="md-li" {...props} />,
+                code: ({node, inline, ...props}) => 
+                  inline ? <code className="md-inline-code" {...props} /> 
+                        : <code className="md-code-block" {...props} />,
+                pre: ({node, ...props}) => <pre className="md-pre" {...props} />,
+                blockquote: ({node, ...props}) => <blockquote className="md-blockquote" {...props} />,
+                table: ({node, ...props}) => <table className="md-table" {...props} />,
+                th: ({node, ...props}) => <th className="md-th" {...props} />,
+                td: ({node, ...props}) => <td className="md-td" {...props} />
+              }}
+            >
+              {message.text}
+            </ReactMarkdown>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -169,8 +189,26 @@ export default function Chat() {
     <div className="main-container">
       <div className="chat-container">
         <div className="chat-header">
-          <span className="header-icon">✨</span>
-          <span>ChatGenie</span>
+          <div className="header-actions">
+            <button
+              onClick={handleNewChat}
+              className="header-button"
+              title="New Chat"
+            >
+              <RiChat1Line />
+            </button>
+            <button
+              onClick={handleClearChat}
+              className="header-button"
+              title="Clear Chat"
+            >
+              <RiDeleteBin6Line />
+            </button>
+          </div>
+          <div className="header-title">
+            <span className="header-icon">✨</span>
+            <span>ChatGenie</span>
+          </div>
         </div>
 
         <div 
@@ -235,7 +273,7 @@ export default function Chat() {
               className="send-button"
               aria-label="Send message"
             >
-              <span className="send-icon">➤</span>
+              <RiSendPlaneFill className="send-icon" />
             </button>
           </form>
         </div>
