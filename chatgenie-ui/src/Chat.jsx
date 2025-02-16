@@ -5,7 +5,15 @@ import remarkMath from 'remark-math';
 import remarkGfm from 'remark-gfm';
 import rehypeKatex from 'rehype-katex';
 import rehypeHighlight from 'rehype-highlight';
-import { RiDeleteBin6Line, RiChat1Line, RiSendPlaneFill, RiHistoryLine } from 'react-icons/ri';
+import { 
+  RiDeleteBin6Line, 
+  RiChat1Line, 
+  RiSendPlaneFill, 
+  RiHistoryLine, 
+  RiArrowRightSLine,
+  RiTimeLine,
+  RiUser3Line
+} from 'react-icons/ri';
 import 'katex/dist/katex.min.css';
 import 'highlight.js/styles/github-dark.css';
 
@@ -13,47 +21,26 @@ const TYPING_TIMEOUT = 3000;
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000;
 
-// Popup Component
-const Popup = ({ children, onClose, title }) => (
-  <div className="popup-overlay" onClick={onClose}>
-    <div className="popup-content" onClick={e => e.stopPropagation()}>
-      <div className="popup-header">
-        <h3>{title}</h3>
-        <button className="popup-close" onClick={onClose}>×</button>
-      </div>
-      {children}
-    </div>
-  </div>
-);
-
-// Chat History Component
-const ChatHistory = ({ chats, onSelectChat, onDeleteChat }) => (
-  <div className="chat-history-popup">
-    <div className="chat-history-list">
-      {chats.map(chat => (
-        <div key={chat.id} className="chat-history-item">
-          <span onClick={() => onSelectChat(chat.id)}>{chat.title}</span>
-          <button 
-            className="delete-chat-button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onDeleteChat(chat.id);
-            }}
-          >
-            <RiDeleteBin6Line />
-          </button>
-        </div>
-      ))}
-    </div>
-  </div>
-);
-
 // Animated Icon Component
 const AnimatedIcon = () => (
   <div className="animated-icon-wrapper">
     <div className="animated-icon-3d">
       <div className="sparkle-star">✨</div>
       <div className="glow-effect"></div>
+    </div>
+  </div>
+);
+
+// User Info Component
+const UserInfo = ({ username, currentDateTime }) => (
+  <div className="user-info">
+    <div className="user-detail">
+      <RiUser3Line />
+      <span>{username}</span>
+    </div>
+    <div className="datetime-detail">
+      <RiTimeLine />
+      <span>{currentDateTime}</span>
     </div>
   </div>
 );
@@ -228,17 +215,18 @@ export default function Chat() {
     const saved = localStorage.getItem('chats');
     return saved ? JSON.parse(saved) : [{ 
       id: 'default',
-      title: 'New Chat',
+      title: 'ChatGenie',
       messages: []
     }];
   });
   
   const [currentChatId, setCurrentChatId] = useState('default');
-  const [showDeletePopup, setShowDeletePopup] = useState(false);
-  const [showChatHistory, setShowChatHistory] = useState(false);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [currentDateTime, setCurrentDateTime] = useState('2025-02-16 16:02:28');
+  const [username] = useState('GM9125');
   
   const messagesEndRef = useRef(null);
   const textareaRef = useRef(null);
@@ -247,12 +235,23 @@ export default function Chat() {
 
   const currentChat = chats.find(chat => chat.id === currentChatId) || chats[0];
 
+  // Update current date time every minute
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const now = new Date();
+      const formatted = now.toISOString().replace('T', ' ').slice(0, 19);
+      setCurrentDateTime(formatted);
+    }, 60000);
+
+    return () => clearInterval(timer);
+  }, []);
+
   useEffect(() => {
     localStorage.setItem('chats', JSON.stringify(chats));
   }, [chats]);
 
   const generateChatTitle = (messages) => {
-    if (messages.length === 0) return 'New Chat';
+    if (messages.length === 0) return 'ChatGenie';
     const firstUserMessage = messages.find(m => m.isUser)?.text || '';
     return firstUserMessage.slice(0, 30) + (firstUserMessage.length > 30 ? '...' : '');
   };
@@ -301,7 +300,9 @@ export default function Chat() {
     setChats(prev => [...prev, newChat]);
     setCurrentChatId(newChat.id);
     setInput('');
-    setShowChatHistory(false);
+    if (window.innerWidth < 768) {
+      setIsSidebarOpen(false);
+    }
   };
 
   const handleDeleteChat = (chatId) => {
@@ -316,12 +317,13 @@ export default function Chat() {
         return filteredChats;
       });
     }
-    setShowDeletePopup(false);
   };
 
   const handleSelectChat = (chatId) => {
     setCurrentChatId(chatId);
-    setShowChatHistory(false);
+    if (window.innerWidth < 768) {
+      setIsSidebarOpen(false);
+    }
   };
 
   const handleKeyDown = (e) => {
@@ -399,39 +401,68 @@ export default function Chat() {
 
   return (
     <div className="main-container">
+      <button
+        className="sidebar-toggle"
+        onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+        title="Toggle Chat History"
+      >
+        <RiArrowRightSLine className={isSidebarOpen ? 'rotate-180' : ''} />
+      </button>
+
+      <div className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
+        <div className="sidebar-header">
+          <h3>Chat History</h3>
+          <button
+            onClick={handleNewChat}
+            className="new-chat-button"
+            title="New Chat"
+          >
+            <RiChat1Line />
+          </button>
+        </div>
+        <div className="sidebar-content">
+          <UserInfo username={username} currentDateTime={currentDateTime} />
+          {chats.map(chat => (
+            <div
+              key={chat.id}
+              className={`sidebar-chat-item ${chat.id === currentChatId ? 'active' : ''}`}
+              onClick={() => handleSelectChat(chat.id)}
+            >
+              <span className="chat-title">{chat.title}</span>
+              {chats.length > 1 && (
+                <button
+                  className="delete-chat-button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteChat(chat.id);
+                  }}
+                  title="Delete Chat"
+                >
+                  <RiDeleteBin6Line />
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+  
       <div className="chat-container">
         <div className="chat-header">
           <div className="header-actions">
-            <div className="chat-history-wrapper">
-              <button
-                onClick={() => setShowChatHistory(!showChatHistory)}
-                className="header-button"
-                title="Chat History"
-              >
-                <RiHistoryLine />
-              </button>
-              {showChatHistory && (
-                <ChatHistory
-                  chats={chats}
-                  onSelectChat={handleSelectChat}
-                  onDeleteChat={handleDeleteChat}
-                />
-              )}
-            </div>
             <button
-              onClick={handleNewChat}
-              className="header-button"
-              title="New Chat"
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              className="header-button mobile-only"
+              title="Chat History"
             >
-              <RiChat1Line />
+              <RiHistoryLine />
             </button>
           </div>
           <div className="header-title">
             <AnimatedIcon />
-            <span>{currentChat.title}</span>
+            <span>ChatGenie</span>
           </div>
         </div>
-
+  
         <div ref={messagesAreaRef} className="messages-area">
           {currentChat.messages.length === 0 && (
             <div className="welcome-message">
@@ -440,7 +471,7 @@ export default function Chat() {
               <p>How can I assist you today?</p>
             </div>
           )}
-
+  
           {currentChat.messages.map((message) => (
             <div
               key={message.id}
@@ -451,7 +482,7 @@ export default function Chat() {
               </div>
             </div>
           ))}
-
+  
           {isLoading && (
             <div className="message-row bot">
               <div className="message-content">
@@ -463,16 +494,16 @@ export default function Chat() {
               </div>
             </div>
           )}
-
+  
           <div ref={messagesEndRef} />
         </div>
-
+  
         {error && (
           <div className="error-alert">
             {error}
           </div>
         )}
-
+  
         <div className="input-area">
           <form onSubmit={handleSubmit} className="input-form">
             <textarea

@@ -548,9 +548,12 @@ body {
 .header-title {
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
+  gap: var(--spacing-xs);
+  font-size: 1.75rem;  /* Increased size */
 }
-
+.header-title .sparkle-star {
+  font-size: 1.9rem;  /* Match the title size */
+}
 .header-button {
   background: rgba(255, 255, 255, 0.1);
   border: none;
@@ -578,7 +581,33 @@ body {
 .send-icon {
   font-size: 1.2rem;
 }
+.new-chat-button {
+  background: transparent;
+  border: none;
+  color: white;
+  cursor: pointer;
+  padding: var(--spacing-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--border-radius-sm);
+  transition: var(--transition-normal);
+  font-size: 1.2rem;
+}
 
+.new-chat-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-1px);
+}
+
+.sidebar-header {
+  padding: var(--spacing-lg);
+  border-bottom: 1px solid var(--border-color);
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
 /* Update the existing send-button styles */
 .send-button {
   background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
@@ -741,4 +770,160 @@ body {
     margin: 0;
     border-radius: 0;
   }
+}
+.main-container {
+  position: relative;
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  background: radial-gradient(circle at top right, rgba(104, 109, 224, 0.1), transparent 40%),
+              radial-gradient(circle at bottom left, rgba(72, 52, 212, 0.1), transparent 40%);
+}
+
+.sidebar-toggle {
+  position: absolute;
+  left: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-radius: 0 var(--border-radius-sm) var(--border-radius-sm) 0;
+  padding: var(--spacing-sm);
+  color: white;
+  cursor: pointer;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition-normal);
+}
+
+.sidebar-toggle:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.sidebar-toggle svg {
+  font-size: 1.5rem;
+  transition: transform var(--transition-normal);
+}
+
+.sidebar-toggle svg.rotate-180 {
+  transform: rotate(180deg);
+}
+
+.sidebar {
+  position: fixed;
+  left: -300px;
+  top: 0;
+  width: 300px;
+  height: 100vh;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border-right: 1px solid var(--border-color);
+  transition: transform var(--transition-normal);
+  z-index: 90;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar.open {
+  transform: translateX(300px);
+}
+
+.sidebar-header {
+  padding: var(--spacing-lg);
+  border-bottom: 1px solid var(--border-color);
+  color: white;
+}
+
+.sidebar-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--spacing-sm);
+}
+
+.sidebar-chat-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-sm);
+  margin-bottom: var(--spacing-xs);
+  border-radius: var(--border-radius-sm);
+  background: rgba(255, 255, 255, 0.05);
+  color: white;
+  cursor: pointer;
+  transition: var(--transition-normal);
+}
+
+.sidebar-chat-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-chat-item.active {
+  background: rgba(104, 109, 224, 0.2);
+}
+
+.chat-title {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-right: var(--spacing-sm);
+}
+
+.mobile-only {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    left: -100%;
+    width: 100%;
+  }
+
+  .sidebar.open {
+    transform: translateX(100%);
+  }
+
+  .sidebar-toggle {
+    display: none;
+  }
+
+  .mobile-only {
+    display: block;
+  }
+}
+.user-info {
+  padding: var(--spacing-md);
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: var(--border-radius-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+.user-detail,
+.datetime-detail {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.9rem;
+  margin-bottom: var(--spacing-xs);
+}
+
+.user-detail svg,
+.datetime-detail svg {
+  font-size: 1.1rem;
+  opacity: 0.7;
+}
+
+.datetime-detail {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.user-info span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
