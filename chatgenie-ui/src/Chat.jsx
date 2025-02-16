@@ -113,107 +113,232 @@ export default function Chat() {
     }
   };
 
+  // In the handleSubmit function, update the error handling:
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
-
+  
     const userMessage = input.trim();
     setInput('');
     setError(null);
     
     setMessages(prev => [...prev, { 
       id: Date.now(),
-      text: userMessage, 
+      text: userMessage,
       isUser: true,
       timestamp: new Date().toISOString()
     }]);
-
+  
     setIsLoading(true);
-
-    try {
-      const data = await fetchWithRetry('http://localhost:5000/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: userMessage }),
-      });
-
-      setMessages(prev => [...prev, {
-        id: Date.now(),
-        text: data.response,
-        isUser: false,
-        timestamp: new Date().toISOString()
-      }]);
-    } catch (error) {
-      console.error('Error:', error);
-      setError('Failed to send message. Please try again.');
-    } finally {
-      setIsLoading(false);
+  
+    let retries = MAX_RETRIES;
+    while (retries > 0) {
+      try {
+        const response = await fetch('http://localhost:5000/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: userMessage }),
+        });
+  
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+  
+        const data = await response.json();
+        
+        if (data.status === 'error') {
+          throw new Error(data.error);
+        }
+  
+        if (data.response) {
+          setMessages(prev => [...prev, {
+            id: Date.now(),
+            text: data.response.trim(),
+            isUser: false,
+            timestamp: new Date().toISOString()
+          }]);
+          break;
+        }
+      } catch (error) {
+        console.error(`Attempt ${MAX_RETRIES - retries + 1} failed:`, error);
+        retries--;
+        
+        if (retries === 0) {
+          setError(`Failed to send message: ${error.message}`);
+        } else {
+          await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+        }
+      }
     }
+    
+    setIsLoading(false);
   };
 
-  const MessageBubble = ({ message }) => {
-    const [isCodeLoaded, setIsCodeLoaded] = useState(false);
+const MessageBubble = ({ message }) => {
+  const [isCodeLoaded, setIsCodeLoaded] = useState(false);
 
-    useEffect(() => {
-      setIsCodeLoaded(true);
-    }, []);
+  useEffect(() => {
+    setIsCodeLoaded(true);
+  }, []);
 
-    return (
-      <div className="message-container">
-        <div className={`message ${message.isUser ? 'user-message' : 'bot-message'}`}>
-          <div className="message-header">
-            <span className="message-icon">
-              {message.isUser ? '👤' : '🤖'}
-            </span>
-            <span className="message-time">
-              {new Date(message.timestamp).toLocaleTimeString()}
-            </span>
-          </div>
-          <div className="message-text">
-            {message.isUser ? (
-              message.text
-            ) : (
-              <ReactMarkdown
-                remarkPlugins={[remarkMath, remarkGfm]}
-                rehypePlugins={[rehypeKatex, rehypeHighlight]}
-                components={{
-                  h1: ({node, ...props}) => <h1 className="md-h1" {...props} />,
-                  h2: ({node, ...props}) => <h2 className="md-h2" {...props} />,
-                  h3: ({node, ...props}) => <h3 className="md-h3" {...props} />,
-                  p: ({node, ...props}) => <p className="md-p" {...props} />,
-                  ul: ({node, ...props}) => <ul className="md-ul" {...props} />,
-                  ol: ({node, ...props}) => <ol className="md-ol" {...props} />,
-                  li: ({node, ...props}) => <li className="md-li" {...props} />,
-                  code: ({node, inline, className, children, ...props}) => 
-                    inline ? (
-                      <code className="md-inline-code" {...props}>
+  const formatMessageTime = (timestamp) => {
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString([], { 
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    });
+  };
+
+  return (
+    <div className="message-container">
+      <div className={`message ${message.isUser ? 'user-message' : 'bot-message'}`}>
+        <div className="message-header">
+          <span className="message-icon">
+            {message.isUser ? '👤' : '🤖'}
+          </span>
+          <span className="message-time">
+            {formatMessageTime(message.timestamp)}
+          </span>
+        </div>
+        <div className="message-text">
+          {message.isUser ? (
+            message.text
+          ) : (
+            <ReactMarkdown
+              remarkPlugins={[remarkMath, remarkGfm]}
+              rehypePlugins={[rehypeKatex, rehypeHighlight]}
+              components={{
+                h1: ({children, ...props}) => <h1 className="md-h1" {...props}>{children}</h1>,
+                h2: ({children, ...props}) => <h2 className="md-h2" {...props}>{children}</h2>,
+                h3: ({children, ...props}) => <h3 className="md-h3" {...props}>{children}</h3>,
+                p: ({children, ...props}) => <p className="md-p" {...props}>{children}</p>,
+                // Updated list components
+                ul: ({children, ...props}) => {
+                  const filteredProps = {...props};
+                  delete filteredProps.ordered;
+                  return <ul className="md-ul" {...filteredProps}>{children}</ul>;
+                },
+                ol: ({children, ...props}) => {
+                  const filteredProps = {...props};
+                  delete filteredProps.ordered;
+                  return <ol className="md-ol" {...filteredProps}>{children}</ol>;
+                },
+                li: ({children, ...props}) => {
+                  const filteredProps = {...props};
+                  delete filteredProps.ordered;
+                  return <li className="md-li" {...filteredProps}>{children}</li>;
+                },
+                code: ({inline, className, children, ...props}) => {
+                  const filteredProps = {...props};
+                  delete filteredProps.node;
+                  return inline ? (
+                    <code className="md-inline-code" {...filteredProps}>
+                      {children}
+                    </code>
+                  ) : (
+                    <code 
+                      className={`md-code-block ${isCodeLoaded ? 'loaded' : ''} ${className || ''}`}
+                      {...filteredProps}
+                    >
+                      {children}
+                    </code>
+                  );
+                },
+                pre: ({children, ...props}) => {
+                  const filteredProps = {...props};
+                  delete filteredProps.node;
+                  return <pre className="md-pre pre-highlight" {...filteredProps}>{children}</pre>;
+                },
+                blockquote: ({children, ...props}) => {
+                  const filteredProps = {...props};
+                  delete filteredProps.node;
+                  return <blockquote className="md-blockquote" {...filteredProps}>{children}</blockquote>;
+                },
+                table: ({children, ...props}) => {
+                  const filteredProps = {...props};
+                  delete filteredProps.node;
+                  return (
+                    <div className="table-container">
+                      <table className="md-table" {...filteredProps}>
                         {children}
-                      </code>
-                    ) : (
-                      <code 
-                        className={`md-code-block ${isCodeLoaded ? 'loaded' : ''} ${className || ''}`}
-                        {...props}
-                      >
-                        {children}
-                      </code>
-                    ),
-                  pre: ({node, ...props}) => (
-                    <pre className="md-pre pre-highlight" {...props} />
-                  ),
-                  blockquote: ({node, ...props}) => <blockquote className="md-blockquote" {...props} />,
-                  table: ({node, ...props}) => <table className="md-table" {...props} />,
-                  th: ({node, ...props}) => <th className="md-th" {...props} />,
-                  td: ({node, ...props}) => <td className="md-td" {...props} />
-                }}
-              >
-                {message.text}
-              </ReactMarkdown>
-            )}
-          </div>
+                      </table>
+                    </div>
+                  );
+                },
+                th: ({children, ...props}) => {
+                  const filteredProps = {...props};
+                  delete filteredProps.node;
+                  return <th className="md-th" {...filteredProps}>{children}</th>;
+                },
+                td: ({children, ...props}) => {
+                  const filteredProps = {...props};
+                  delete filteredProps.node;
+                  return <td className="md-td" {...filteredProps}>{children}</td>;
+                },
+                input: ({...props}) => {
+                  const filteredProps = {...props};
+                  delete filteredProps.node;
+                  return (
+                    <input
+                      {...filteredProps}
+                      disabled
+                      style={{ marginRight: '0.5em' }}
+                    />
+                  );
+                },
+                del: ({children, ...props}) => {
+                  const filteredProps = {...props};
+                  delete filteredProps.node;
+                  return <del className="md-del" {...filteredProps}>{children}</del>;
+                },
+                em: ({children, ...props}) => {
+                  const filteredProps = {...props};
+                  delete filteredProps.node;
+                  return <em className="md-em" {...filteredProps}>{children}</em>;
+                },
+                strong: ({children, ...props}) => {
+                  const filteredProps = {...props};
+                  delete filteredProps.node;
+                  return <strong className="md-strong" {...filteredProps}>{children}</strong>;
+                },
+                a: ({children, ...props}) => {
+                  const filteredProps = {...props};
+                  delete filteredProps.node;
+                  return (
+                    <a
+                      className="md-link"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      {...filteredProps}
+                    >
+                      {children}
+                    </a>
+                  );
+                },
+                img: ({...props}) => {
+                  const filteredProps = {...props};
+                  delete filteredProps.node;
+                  return (
+                    <img
+                      className="md-img"
+                      alt={props.alt || ''}
+                      loading="lazy"
+                      {...filteredProps}
+                    />
+                  );
+                }
+              }}
+            >
+              {message.text}
+            </ReactMarkdown>
+          )}
         </div>
       </div>
-    );
-  };
+    </div>
+  );
+};
 
   return (
     <div className="main-container">

@@ -3,6 +3,8 @@ import google.generativeai as genai
 from dotenv import load_dotenv
 import os
 from flask_cors import CORS
+import re
+from datetime import datetime
 
 # Load environment variables
 load_dotenv()
@@ -39,31 +41,131 @@ chat = model.start_chat(history=[])
 app = Flask(__name__)
 CORS(app)
 
-def format_response(text):
-    """Format the response to handle markdown and equations properly."""
-    # Ensure proper line breaks for markdown
-    text = text.replace('\n', '\n\n')
-    
-    # Format code blocks
+def infer_language(code_line):
+    """Infer the programming language from code snippet."""
+    language_patterns = {
+        'python': [
+            r'^(async\s+)?def\s+\w+\s*\(',
+            r'^from\s+[\w.]+\s+import\s+',
+            r'^import\s+[\w.]+',
+            r'^class\s+\w+(\s*\([\w.,\s]+\))?\s*:',
+        ],
+        'javascript': [
+            r'^(async\s+)?function\s*\w*\s*\(',
+            r'^const\s+\w+\s*=',
+            r'^let\s+\w+\s*=',
+            r'^var\s+\w+\s*=',
+            r'^class\s+\w+\s*{',
+            r'^import\s+.*from\s+[\'"]',
+            r'^export\s+',
+        ],
+        'typescript': [
+            r'^interface\s+\w+\s*{',
+            r'^type\s+\w+\s*=',
+            r':\s*(string|number|boolean|any)\s*[;=]',
+        ],
+        'html': [
+            r'^<!DOCTYPE\s+html>',
+            r'^<html',
+            r'^<div',
+            r'^<[a-z]+[^>]*>',
+        ],
+        'css': [
+            r'^[\w.-]+\s*{',
+            r'^\s*@media\s',
+            r'^\s*@keyframes\s',
+        ],
+        'java': [
+            r'^public\s+class\s+',
+            r'^private\s+\w+\s+\w+\s*\(',
+            r'^protected\s+\w+\s+\w+\s*\(',
+        ],
+        'cpp': [
+            r'^#include\s+[<"]',
+            r'std::\w+',
+        ],
+        'sql': [
+            r'^SELECT\s+',
+            r'^INSERT\s+INTO',
+            r'^UPDATE\s+',
+            r'^DELETE\s+FROM',
+        ],
+        'bash': [
+            r'^#!/bin/bash',
+            r'\$\{.*\}',
+            r'^source\s+',
+        ],
+        'markdown': [
+            r'^#+\s+',
+            r'^\[.*\]\(.*\)',
+            r'^>\s+',
+        ]
+    }
+
+    code_line = code_line.strip()
+    for lang, patterns in language_patterns.items():
+        for pattern in patterns:
+            if re.match(pattern, code_line, re.IGNORECASE):
+                return lang
+    return 'plaintext'
+
+def format_code_blocks(text):
+    """Format code blocks with proper language detection and syntax."""
     lines = text.split('\n')
     formatted_lines = []
     in_code_block = False
+    current_block = []
     
     for line in lines:
         if line.startswith('```'):
-            in_code_block = not in_code_block
-            formatted_lines.append(line)
-        else:
             if in_code_block:
-                formatted_lines.append(line)
+                # End of code block
+                if current_block:
+                    lang = infer_language(current_block[0])
+                    formatted_lines.append(f'```{lang}')
+                    formatted_lines.extend(current_block)
+                formatted_lines.append('```')
+                current_block = []
+                in_code_block = False
             else:
-                # Format math equations
-                if '$' in line:
-                    line = line.replace('\\(', '$').replace('\\)', '$')
-                    line = line.replace('\\[', '$$').replace('\\]', '$$')
-                formatted_lines.append(line)
+                # Start of code block
+                in_code_block = True
+                if len(line) > 3:
+                    # If language is specified, keep it
+                    formatted_lines.append(line)
+                # else language will be inferred when block ends
+        elif in_code_block:
+            current_block.append(line)
+        else:
+            formatted_lines.append(line)
     
     return '\n'.join(formatted_lines)
+
+def format_response(text):
+    """Format the response to be more like modern AI chatbots."""
+    # Pre-process the text
+    text = text.strip()
+    
+    # Handle mathematical equations
+    text = re.sub(r'\\\((.*?)\\\)', r'$\1$', text)
+    text = re.sub(r'\\\[(.*?)\\\]', r'$$\1$$', text)
+    
+    # Format code blocks
+    text = format_code_blocks(text)
+    
+    # Ensure proper spacing around headers
+    text = re.sub(r'(#{1,6}\s.*?)\n', r'\1\n\n', text)
+    
+    # Ensure proper spacing around lists
+    text = re.sub(r'((?:\d+\.|\*|\-)\s+.*?)\n(?!\d+\.|\*|\-|\s)', r'\1\n\n', text)
+    
+    # Ensure proper spacing around blockquotes
+    text = re.sub(r'(>\s+.*?)\n(?!>)', r'\1\n\n', text)
+    
+    # Format inline code
+    text = re.sub(r'(?<!`)`(?!`)(.*?)(?<!`)`(?!`)', r'`\1`', text)
+    
+    return text
 
 @app.route('/chat', methods=['POST'])
 def chat_endpoint():
@@ -74,18 +176,42 @@ def chat_endpoint():
         return jsonify({"error": "No message provided"}), 400
 
     try:
-        # Add system prompt to format responses
+        # Enhanced system prompt for better formatting
         system_prompt = """
-        Format your responses using markdown:
-        - Use ** for bold text
-        - Use ` for inline code
-        - Use ``` for code blocks
-        - Use $ for inline math equations
-        - Use $$ for display math equations
-        - Use # for main headers
-        - Use ## for subheaders
-        - Use * for bullet points
-        - Properly format numbered lists
+        You are ChatGenie, an enhanced AI assistant. Format your responses professionally and clearly:
+
+        1. Structure and Headers:
+           - Use ## for main sections
+           - Use ### for subsections
+           - Add line breaks between sections
+
+        2. Code Formatting:
+           - Use ```language for code blocks
+           - Use `backticks` for inline code
+           - Always specify the language for code blocks
+           - Include helpful code comments
+
+        3. Lists and Points:
+           - Use numbered lists (1., 2., etc.) for sequential steps
+           - Use bullet points (-) for unordered lists
+           - Maintain consistent indentation
+
+        4. Emphasis:
+           - Use **bold** for important concepts
+           - Use *italics* for emphasis
+           - Use > for important notes or quotes
+
+        5. Technical Content:
+           - Use $ for inline math equations
+           - Use $$ for display math equations
+           - Format tables using proper markdown
+           - Include links when referencing external content
+
+        6. Remember:
+           - Keep explanations clear and concise
+           - Use examples when helpful
+           - Break down complex concepts
+           - End with a clear conclusion or next steps
         """
         
         # Send the message to the model
@@ -94,9 +220,19 @@ def chat_endpoint():
         # Format the response
         formatted_response = format_response(response.text)
         
-        return jsonify({"response": formatted_response})
+        # Add timestamp to response
+        timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
+        
+        return jsonify({
+            "response": formatted_response,
+            "timestamp": timestamp,
+            "status": "success"
+        })
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({
+            "error": str(e),
+            "status": "error"
+        }), 500
 
 if __name__ == '__main__':
     app.run(port=5000)
