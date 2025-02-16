@@ -783,7 +783,7 @@ body {
 .sidebar-toggle {
   position: absolute;
   left: -8px;
-  top: 50%;
+  top: 47.5%;
   transform: translateY(-50%);
   background: rgba(255, 255, 255, 0.1);
   border: none;
@@ -926,4 +926,16 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.datetime-detail {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.6);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.datetime-detail span {
+  font-family: 'Fira Code', monospace;
+  letter-spacing: -0.5px;
 }

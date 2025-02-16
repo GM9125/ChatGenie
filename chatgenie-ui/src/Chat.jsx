@@ -225,7 +225,16 @@ export default function Chat() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [currentDateTime, setCurrentDateTime] = useState('2025-02-16 16:02:28');
+  const [currentDateTime, setCurrentDateTime] = useState(() => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+  });
   const [username] = useState('GM9125');
   
   const messagesEndRef = useRef(null);
@@ -237,12 +246,20 @@ export default function Chat() {
 
   // Update current date time every minute
   useEffect(() => {
-    const timer = setInterval(() => {
+    const updateDateTime = () => {
       const now = new Date();
-      const formatted = now.toISOString().replace('T', ' ').slice(0, 19);
-      setCurrentDateTime(formatted);
-    }, 60000);
-
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const seconds = String(now.getSeconds()).padStart(2, '0');
+      setCurrentDateTime(`${year}-${month}-${day} ${hours}:${minutes}:${seconds}`);
+    };
+    
+    updateDateTime(); // Update immediately
+    const timer = setInterval(updateDateTime, 1000); // Update every second
+    
     return () => clearInterval(timer);
   }, []);
 
