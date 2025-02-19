@@ -939,3 +939,146 @@ body {
   font-family: 'Fira Code', monospace;
   letter-spacing: -0.5px;
 }
+/* Copy Button Styles */
+.btn-copy {
+  --button-text-color: #cccccc;
+  --button-hover-text-color: #8bb9fe;
+  --tooltip-bg: #f4f3f3;
+  --tooltip-border-radius: 4px;
+  --tooltip-font-family: 'Fira Code', Menlo, monospace;
+  --tooltip-font-size: 12px;
+  --tooltip-text-color: rgb(50, 50, 50);
+  --tooltip-padding-x: 7px;
+  --tooltip-padding-y: 7px;
+  --tooltip-offset: 8px;
+
+  box-sizing: border-box;
+  width: 32px;
+  height: 32px;
+  color: var(--button-text-color);
+  border: none;
+  cursor: pointer;
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  outline: none;
+  background: transparent;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 1;
+  z-index: 10;
+  transition: color 0.2s ease;
+}
+
+.code-block-wrapper {
+  position: relative;
+  margin: var(--spacing-sm) 0;
+  display: block;
+  width: 100%;
+}
+
+.btn-copy > .cp-tooltip {
+  position: absolute;
+  opacity: 0;
+  visibility: hidden;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font: var(--tooltip-font-size) var(--tooltip-font-family);
+  color: var(--tooltip-text-color);
+  background: var(--tooltip-bg);
+  padding: var(--tooltip-padding-y) var(--tooltip-padding-x);
+  border-radius: var(--tooltip-border-radius);
+  pointer-events: none;
+  transition: all 0.2s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+}
+
+.btn-copy > .cp-tooltip::before {
+  content: attr(data-text-initial);
+}
+
+.btn-copy > .cp-tooltip::after {
+  content: "";
+  position: absolute;
+  bottom: calc(var(--tooltip-padding-y) / 2 * -1);
+  width: var(--tooltip-padding-y);
+  height: var(--tooltip-padding-y);
+  background: inherit;
+  left: 50%;
+  transform: translateX(-50%) rotate(45deg);
+  z-index: -999;
+  pointer-events: none;
+}
+
+.btn-copy:hover .cp-tooltip,
+.btn-copy:focus:not(:focus-visible) .cp-tooltip {
+  opacity: 1;
+  visibility: visible;
+  top: calc((100% + var(--tooltip-offset)) * -1);
+}
+
+.btn-copy:focus:not(:focus-visible) .cp-tooltip::before {
+  content: attr(data-text-end);
+}
+
+.btn-copy:hover svg {
+  color: var(--button-hover-text-color);
+}
+
+.cp-clipboard {
+  display: block;
+  transition: transform 0.2s ease;
+}
+
+.cp-check-mark {
+  display: none;
+  transform: scale(0.9);
+}
+
+.btn-copy:focus:not(:focus-visible) .cp-clipboard {
+  display: none;
+}
+
+.btn-copy:focus:not(:focus-visible) .cp-check-mark {
+  display: block;
+  animation: checkmark 0.2s ease-in-out;
+}
+
+@keyframes checkmark {
+  0% {
+    transform: scale(0);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Dark theme adjustments */
+@media (prefers-color-scheme: dark) {
+  .btn-copy {
+    --tooltip-bg: #2d2d2d;
+    --tooltip-text-color: #ffffff;
+  }
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  .btn-copy {
+    width: 28px;
+    height: 28px;
+    top: 6px;
+    right: 6px;
+  }
+
+  .btn-copy svg {
+    width: 16px;
+    height: 16px;
+  }
+}
