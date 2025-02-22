@@ -49,6 +49,7 @@ def infer_language(code_line):
             r'^from\s+[\w.]+\s+import\s+',
             r'^import\s+[\w.]+',
             r'^class\s+\w+(\s*\([\w.,\s]+\))?\s*:',
+            r'@\w+(\.\w+)*(\(.*\))?'
         ],
         'javascript': [
             r'^(async\s+)?function\s*\w*\s*\(',
@@ -58,15 +59,30 @@ def infer_language(code_line):
             r'^class\s+\w+\s*{',
             r'^import\s+.*from\s+[\'"]',
             r'^export\s+',
+            r'=>',
+            r'}\s*\(\s*\)\s*{',
         ],
         'typescript': [
             r'^interface\s+\w+\s*{',
             r'^type\s+\w+\s*=',
             r':\s*(string|number|boolean|any)\s*[;=]',
+            r'^enum\s+\w+',
+        ],
+        'jsx': [
+            r'<\w+(\s+\w+=".*?")*\s*>',
+            r'React\.',
+            r'useState|useEffect|useContext',
+        ],
+        'tsx': [
+            r'<\w+(\s+\w+=".*?")*\s*>.*?:\s*(string|number|boolean)',
+            r'React\.',
+            r'useState<',
         ],
         'html': [
             r'^<!DOCTYPE\s+html>',
             r'^<html',
+            r'^<head',
+            r'^<body',
             r'^<div',
             r'^<[a-z]+[^>]*>',
         ],
@@ -74,31 +90,101 @@ def infer_language(code_line):
             r'^[\w.-]+\s*{',
             r'^\s*@media\s',
             r'^\s*@keyframes\s',
+            r'^\s*@import\s',
+            r'^\s*\.',
+            r'^\s*#',
         ],
         'java': [
-            r'^public\s+class\s+',
+            r'^public\s+(class|interface)\s+',
             r'^private\s+\w+\s+\w+\s*\(',
             r'^protected\s+\w+\s+\w+\s*\(',
+            r'System\.out\.',
+        ],
+        'kotlin': [
+            r'^fun\s+\w+',
+            r'^val\s+\w+',
+            r'^var\s+\w+',
+            r'^class\s+\w+(\s*:\s*\w+)?(\s*\(.*\))?\s*[{]',
+        ],
+        'swift': [
+            r'^import\s+Foundation',
+            r'^class\s+\w+:\s*\w+',
+            r'^let\s+\w+\s*:\s*\w+',
+            r'^var\s+\w+\s*:\s*\w+',
         ],
         'cpp': [
             r'^#include\s+[<"]',
             r'std::\w+',
+            r'^template\s*<',
+            r'->\s*\w+\s*[{;]',
+        ],
+        'csharp': [
+            r'^using\s+\w+(\.\w+)*;',
+            r'^namespace\s+\w+',
+            r'public\s+class\s+\w+\s*:\s*\w+',
+        ],
+        'go': [
+            r'^package\s+\w+',
+            r'^func\s+\w+',
+            r'^type\s+\w+\s+struct\s*{',
+            r':=',
+        ],
+        'rust': [
+            r'^fn\s+\w+',
+            r'^let\s+mut\s+\w+',
+            r'^impl\s+\w+',
+            r'->\s*Result<',
+        ],
+        'php': [
+            r'^\s*<\?php',
+            r'\$\w+\s*=',
+            r'function\s+\w+\s*\(',
+        ],
+        'ruby': [
+            r'^require\s+[\'"]',
+            r'^def\s+\w+',
+            r'^class\s+\w+\s*<\s*\w+',
+            r'=>',
         ],
         'sql': [
             r'^SELECT\s+',
             r'^INSERT\s+INTO',
             r'^UPDATE\s+',
             r'^DELETE\s+FROM',
+            r'^CREATE\s+TABLE',
         ],
-        'bash': [
-            r'^#!/bin/bash',
+        'shell': [
+            r'^#!/bin/\w+',
             r'\$\{.*\}',
             r'^source\s+',
+            r'\|\s*grep',
+        ],
+        'powershell': [
+            r'^Get-\w+',
+            r'^Set-\w+',
+            r'\$PSScriptRoot',
+        ],
+        'dockerfile': [
+            r'^FROM\s+',
+            r'^RUN\s+',
+            r'^CMD\s+',
+            r'^ENTRYPOINT\s+',
+        ],
+        'yaml': [
+            r'^\s*[-\s]*\w+:',
+            r'^\s*- name:',
+        ],
+        'json': [
+            r'^\s*{',
+            r'^\s*\[',
+            r'"\w+":\s*[{\["]\w+[}\]"]',
         ],
         'markdown': [
             r'^#+\s+',
             r'^\[.*\]\(.*\)',
             r'^>\s+',
+            r'^-\s+',
+            r'^\*\s+',
         ]
     }
 
@@ -107,6 +193,10 @@ def infer_language(code_line):
         for pattern in patterns:
             if re.match(pattern, code_line, re.IGNORECASE):
                 return lang
+
+    # If no specific language is detected, analyze content
+    if re.search(r'[{}()]', code_line):
+        return 'javascript'  # Default to JavaScript for code-like content
     return 'plaintext'
 
 def format_code_blocks(text):
@@ -130,10 +220,16 @@ def format_code_blocks(text):
             else:
                 # Start of code block
                 in_code_block = True
+                # Strip any existing language identifier
                 if len(line) > 3:
-                    # If language is specified, keep it
-                    formatted_lines.append(line)
-                # else language will be inferred when block ends
+                    existing_lang = line[3:].strip()
+                    if existing_lang:
+                        formatted_lines.append(f'```{existing_lang}')
+                    else:
+                        # Will infer language when block ends
+                        continue
+                else:
+                    continue
         elif in_code_block:
             current_block.append(line)
         else:

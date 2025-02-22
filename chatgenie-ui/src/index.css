@@ -132,17 +132,17 @@ body {
 }
 
 .message-row {
-  composes: animated-element;
   display: flex;
   padding: var(--spacing-md);
-  animation: messageIn var(--transition-normal) forwards;
   width: 100%;
+  animation: messageIn var(--transition-normal) forwards;
 }
 
 .message-content {
-  composes: container;
-  display: flex;
+  max-width: var(--container-width);
+  margin: 0 auto;
   width: 100%;
+  display: flex;
 }
 
 .message-container {
@@ -165,7 +165,6 @@ body {
   color: #fff;
   padding: var(--spacing-md);
   position: relative;
-  transition: var(--transition-normal);
   overflow-wrap: break-word;
   max-width: 100%;
 }
@@ -179,9 +178,25 @@ body {
 }
 
 .message-text {
-  white-space: pre-wrap;
-  font-size: 0.95rem;
+  position: relative;
+  width: 100%;
   line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+/* Whitespace handling */
+pre,
+code {
+  white-space: pre;
+}
+
+.message-text > *:not(pre):not(code) {
+  white-space: normal;
+}
+
+.message-text pre {
+  white-space: pre;
+  overflow-x: auto;
 }
 
 .user-message {
@@ -351,33 +366,35 @@ body {
   margin: var(--spacing-xs) 0;
   line-height: 1.5;
 }
+/* Markdown element styles */
+.md-p,
+.md-blockquote,
+.md-ul,
+.md-ol,
+.md-li,
+.md-table,
+.md-th,
+.md-td {
+  margin: var(--spacing-sm) 0;
+  line-height: 1.6;
+  white-space: normal;
+}
 
 .md-inline-code {
   background: rgba(255, 255, 255, 0.1);
-  padding: 0.2rem 0.4rem;
-  border-radius: var(--border-radius-sm);
+  padding: 2px 6px;
+  border-radius: 4px;
   font-family: 'Fira Code', monospace;
   font-size: 0.9em;
   color: #a5b4fc;
-}
-
-.md-code-block {
-  display: block;
-  background: rgba(0, 0, 0, 0.3);
-  padding: var(--spacing-md);
-  margin: var(--spacing-sm) 0;
-  border-radius: var(--border-radius-sm);
-  font-family: 'Fira Code', monospace;
-  font-size: 0.9em;
   white-space: pre-wrap;
-  overflow-x: auto;
-  color: #e5e7eb;
-  border: 1px solid var(--border-color);
 }
 
 .md-pre {
   margin: 0;
+  padding: 0;
   background: transparent;
+  white-space: pre;
 }
 
 .md-blockquote {
@@ -972,13 +989,6 @@ body {
   transition: color 0.2s ease;
 }
 
-.code-block-wrapper {
-  position: relative;
-  margin: var(--spacing-sm) 0;
-  display: block;
-  width: 100%;
-}
-
 .btn-copy > .cp-tooltip {
   position: absolute;
   opacity: 0;
@@ -1081,4 +1091,205 @@ body {
     width: 16px;
     height: 16px;
   }
+}
+/* Text Selection Styles */
+/* Selection styles */
+::selection {
+  background-color: #008000 !important;
+  color: #ffffff !important;
+  text-shadow: none !important;
+}
+
+::-moz-selection {
+  background-color: #008000 !important;
+  color: #ffffff !important;
+  text-shadow: none !important;
+}
+
+/* Code block selection */
+.md-code-block::selection,
+.md-code-block *::selection {
+  background-color: #008000 !important;
+  color: #ffffff !important;
+}
+
+.md-code-block::-moz-selection,
+.md-code-block *::-moz-selection {
+  background-color: #008000 !important;
+  color: #ffffff !important;
+}
+
+/* Enable text selection for message content */
+.message-container,
+.message,
+.message-text,
+.md-code-block,
+pre,
+code,
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+li,
+span,
+blockquote,
+table,
+td,
+th {
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  -ms-user-select: text !important;
+  cursor: text !important;
+  pointer-events: auto !important;
+}
+
+/* Make text elements selectable by default */
+p, span, h1, h2, h3, h4, h5, h6, li, td, th, code, pre {
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  -ms-user-select: text !important;
+}
+
+.code-block-wrapper {
+  position: relative;
+  margin: var(--spacing-sm) 0;
+  width: 100%;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: var(--border-radius-sm);
+  border: 1px solid var(--border-color);
+  overflow: hidden;
+}
+
+.code-block-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid var(--border-color);
+  width: 100%;
+}
+
+.code-language {
+  font-family: 'Fira Code', monospace;
+  font-size: 0.8em;
+  color: #8bb9fe;
+  opacity: 0.8;
+  text-transform: capitalize;
+}
+.selectable {
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  -ms-user-select: text !important;
+  cursor: text !important;
+}
+
+.unselectable {
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  cursor: default !important;
+  pointer-events: none !important;
+}
+.md-code-block {
+  display: block;
+  padding: 1em;
+  margin: 0;
+  overflow-x: auto;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.9em;
+  line-height: 1.5;
+  white-space: pre;
+  color: #e5e7eb;
+  background: transparent;
+}
+
+/* Prevent selection for interactive elements */
+button, 
+.btn-copy,
+.message-icon,
+.message-time,
+.header-actions,
+.sidebar-toggle,
+svg,
+.code-language {
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  cursor: pointer !important;
+}
+
+/* Fix message text selection */
+.message-text {
+  position: relative;
+  width: 100%;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  -ms-user-select: text !important;
+}
+
+.message-text * {
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  -ms-user-select: text !important;
+}
+
+/* Fix ReactMarkdown text selection */
+.message-text p,
+.message-text pre,
+.message-text code,
+.message-text ul,
+.message-text ol,
+.message-text li,
+.message-text blockquote {
+  pointer-events: auto !important;
+}
+
+/* Fix inline code selection */
+.md-inline-code {
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  -ms-user-select: text !important;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.9em;
+  color: #a5b4fc;
+}
+
+/* Ensure copy button doesn't interfere with selection */
+.btn-copy {
+  pointer-events: auto !important;
+  z-index: 10;
+}
+
+/* Fix any potential pointer-event issues */
+.messages-area {
+  pointer-events: auto !important;
+}
+
+/* Prevent selection on icons and interactive elements */
+.message svg,
+.message button,
+.message .btn-copy {
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  pointer-events: auto !important;
 }

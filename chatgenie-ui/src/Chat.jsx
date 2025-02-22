@@ -135,83 +135,197 @@ const MessageBubble = ({ message }) => {
     });
   };
 
+  // Helper function to clean code content
+  const cleanCodeContent = (code) => {
+    if (typeof code === 'string') {
+      return code.replace(/^(```\w*\n|\n```$)/g, '').trim();
+    }
+    if (Array.isArray(code)) {
+      return code
+        .map(child => typeof child === 'string' ? child : child?.props?.children || '')
+        .join('')
+        .replace(/^(```\w*\n|\n```$)/g, '')
+        .trim();
+    }
+    return '';
+  };
+
+  // Helper function to get language name
+  const getLanguageName = (className) => {
+    if (!className) return null;
+    const match = className.match(/language-(\w+)/);
+    return match ? match[1] : null;
+  };
+
+  // Helper function to format language display name
+  const formatLanguageName = (lang) => {
+    if (!lang) return 'plaintext';
+    
+    const languageNames = {
+      'js': 'JavaScript',
+      'jsx': 'React/JSX',
+      'ts': 'TypeScript',
+      'tsx': 'React/TSX',
+      'py': 'Python',
+      'html': 'HTML',
+      'css': 'CSS',
+      'scss': 'SCSS',
+      'sql': 'SQL',
+      'bash': 'Bash',
+      'shell': 'Shell',
+      'powershell': 'PowerShell',
+      'ps1': 'PowerShell',
+      'java': 'Java',
+      'cpp': 'C++',
+      'c': 'C',
+      'cs': 'C#',
+      'go': 'Go',
+      'rust': 'Rust',
+      'rb': 'Ruby',
+      'php': 'PHP',
+      'kt': 'Kotlin',
+      'swift': 'Swift',
+      'dart': 'Dart',
+      'json': 'JSON',
+      'yaml': 'YAML',
+      'xml': 'XML',
+      'markdown': 'Markdown',
+      'md': 'Markdown',
+      'dockerfile': 'Dockerfile',
+      'plaintext': 'Plain Text'
+    };
+
+    const normalizedLang = lang.toLowerCase();
+    return languageNames[normalizedLang] || lang.charAt(0).toUpperCase() + lang.slice(1);
+  };
+
+  const handleMessageClick = (e) => {
+    if (e.target.closest('.btn-copy')) return;
+    e.stopPropagation();
+  };
+
   return (
-    <div className="message-container">
+    <div 
+      className="message-container" 
+      onClick={handleMessageClick}
+      onMouseDown={(e) => e.stopPropagation()}
+    >
       <div className={`message ${message.isUser ? 'user-message' : 'bot-message'}`}>
         <div className="message-header">
-          <span className="message-icon">
+          <span className="message-icon unselectable">
             {message.isUser ? '👤' : '🤖'}
           </span>
-          <span className="message-time">
+          <span className="message-time unselectable">
             {formatMessageTime(message.timestamp)}
           </span>
         </div>
-        <div className="message-text">
+        <div className="message-text selectable">
           {message.isUser ? (
-            message.text
+            <span className="selectable">{message.text}</span>
           ) : (
             <ReactMarkdown
               remarkPlugins={[remarkMath, remarkGfm]}
               rehypePlugins={[rehypeKatex, rehypeHighlight]}
               components={{
-                h1: ({children, ...props}) => <h1 className="md-h1" {...props}>{children}</h1>,
-                h2: ({children, ...props}) => <h2 className="md-h2" {...props}>{children}</h2>,
-                h3: ({children, ...props}) => <h3 className="md-h3" {...props}>{children}</h3>,
-                p: ({children, ...props}) => <p className="md-p" {...props}>{children}</p>,
-                ul: ({children, ...props}) => {
-                  const filteredProps = {...props};
-                  delete filteredProps.ordered;
-                  return <ul className="md-ul" {...filteredProps}>{children}</ul>;
-                },
-                ol: ({children, ...props}) => {
-                  const filteredProps = {...props};
-                  delete filteredProps.ordered;
-                  return <ol className="md-ol" {...filteredProps}>{children}</ol>;
-                },
-                li: ({children, ...props}) => {
-                  const filteredProps = {...props};
-                  delete filteredProps.ordered;
-                  return <li className="md-li" {...filteredProps}>{children}</li>;
-                },
                 code: ({inline, className, children, ...props}) => {
                   const filteredProps = {...props};
                   delete filteredProps.node;
-                  
+
                   if (inline) {
                     return (
-                      <code className="md-inline-code" {...filteredProps}>
-                        {children}
-                      </code>
-                    );
-                  }
-                
-                  return (
-                    <div className="code-block-wrapper">
-                      <CopyButton text={children} />
                       <code 
-                        className={`md-code-block ${isCodeLoaded ? 'loaded' : ''} ${className || ''}`}
+                        className="md-inline-code selectable" 
                         {...filteredProps}
                       >
                         {children}
                       </code>
+                    );
+                  }
+
+                  const languageId = getLanguageName(className);
+                  const displayLanguage = formatLanguageName(languageId);
+                  const cleanedCode = cleanCodeContent(children);
+
+                  return (
+                    <div 
+                      className="code-block-wrapper"
+                      onMouseDown={(e) => e.stopPropagation()}
+                    >
+                      <div className="code-block-header">
+                        <span className="code-language unselectable">
+                          {displayLanguage}
+                        </span>
+                        <CopyButton text={cleanedCode} />
+                      </div>
+                      <pre 
+                        className="md-pre selectable"
+                        onMouseDown={(e) => e.stopPropagation()}
+                      >
+                        <code
+                          className={`md-code-block selectable ${
+                            isCodeLoaded ? 'loaded' : ''
+                          } ${className || ''}`}
+                          {...filteredProps}
+                        >
+                          {cleanedCode}
+                        </code>
+                      </pre>
                     </div>
                   );
                 },
-                pre: ({children, ...props}) => {
+                p: ({children, ...props}) => (
+                  <p className="md-p selectable" {...props}>{children}</p>
+                ),
+                h1: ({children, ...props}) => (
+                  <h1 className="md-h1 selectable" {...props}>{children}</h1>
+                ),
+                h2: ({children, ...props}) => (
+                  <h2 className="md-h2 selectable" {...props}>{children}</h2>
+                ),
+                h3: ({children, ...props}) => (
+                  <h3 className="md-h3 selectable" {...props}>{children}</h3>
+                ),
+                ul: ({children, ...props}) => {
                   const filteredProps = {...props};
-                  delete filteredProps.node;
-                  return <pre className="md-pre pre-highlight" {...filteredProps}>{children}</pre>;
+                  delete filteredProps.ordered;
+                  return (
+                    <ul className="md-ul selectable" {...filteredProps}>
+                      {children}
+                    </ul>
+                  );
+                },
+                ol: ({children, ...props}) => {
+                  const filteredProps = {...props};
+                  delete filteredProps.ordered;
+                  return (
+                    <ol className="md-ol selectable" {...filteredProps}>
+                      {children}
+                    </ol>
+                  );
+                },
+                li: ({children, ...props}) => {
+                  const filteredProps = {...props};
+                  delete filteredProps.ordered;
+                  return (
+                    <li className="md-li selectable" {...filteredProps}>
+                      {children}
+                    </li>
+                  );
                 },
                 blockquote: ({children, ...props}) => {
                   const filteredProps = {...props};
                   delete filteredProps.node;
-                  return <blockquote className="md-blockquote" {...filteredProps}>{children}</blockquote>;
+                  return (
+                    <blockquote className="md-blockquote selectable" {...filteredProps}>
+                      {children}
+                    </blockquote>
+                  );
                 },
                 table: ({children, ...props}) => {
                   const filteredProps = {...props};
                   delete filteredProps.node;
                   return (
-                    <div className="table-container">
+                    <div className="table-container selectable">
                       <table className="md-table" {...filteredProps}>
                         {children}
                       </table>
@@ -221,38 +335,20 @@ const MessageBubble = ({ message }) => {
                 th: ({children, ...props}) => {
                   const filteredProps = {...props};
                   delete filteredProps.node;
-                  return <th className="md-th" {...filteredProps}>{children}</th>;
+                  return (
+                    <th className="md-th selectable" {...filteredProps}>
+                      {children}
+                    </th>
+                  );
                 },
                 td: ({children, ...props}) => {
                   const filteredProps = {...props};
                   delete filteredProps.node;
-                  return <td className="md-td" {...filteredProps}>{children}</td>;
-                },
-                input: ({...props}) => {
-                  const filteredProps = {...props};
-                  delete filteredProps.node;
                   return (
-                    <input
-                      {...filteredProps}
-                      disabled
-                      style={{ marginRight: '0.5em' }}
-                    />
+                    <td className="md-td selectable" {...filteredProps}>
+                      {children}
+                    </td>
                   );
-                },
-                del: ({children, ...props}) => {
-                  const filteredProps = {...props};
-                  delete filteredProps.node;
-                  return <del className="md-del" {...filteredProps}>{children}</del>;
-                },
-                em: ({children, ...props}) => {
-                  const filteredProps = {...props};
-                  delete filteredProps.node;
-                  return <em className="md-em" {...filteredProps}>{children}</em>;
-                },
-                strong: ({children, ...props}) => {
-                  const filteredProps = {...props};
-                  delete filteredProps.node;
-                  return <strong className="md-strong" {...filteredProps}>{children}</strong>;
                 },
                 a: ({children, ...props}) => {
                   const filteredProps = {...props};
@@ -279,7 +375,18 @@ const MessageBubble = ({ message }) => {
                       {...filteredProps}
                     />
                   );
-                }
+                },
+                em: ({children, ...props}) => (
+                  <em className="md-em selectable" {...props}>{children}</em>
+                ),
+                strong: ({children, ...props}) => (
+                  <strong className="md-strong selectable" {...props}>
+                    {children}
+                  </strong>
+                ),
+                del: ({children, ...props}) => (
+                  <del className="md-del selectable" {...props}>{children}</del>
+                )
               }}
             >
               {message.text}
