@@ -17,6 +17,18 @@ import {
 import 'katex/dist/katex.min.css';
 import 'highlight.js/styles/github-dark.css';
 
+const formatDateTime = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const seconds = String(now.getSeconds()).padStart(2, '0');
+  
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+};
+
 const TYPING_TIMEOUT = 3000;
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000;
@@ -113,12 +125,13 @@ const UserInfo = ({ username, currentDateTime }) => (
     </div>
     <div className="datetime-detail">
       <RiTimeLine />
-      <span>{currentDateTime}</span>
+      <span className="datetime">
+        {currentDateTime}
+      </span>
     </div>
   </div>
 );
 
-// Message Bubble Component
 const MessageBubble = ({ message }) => {
   const [isCodeLoaded, setIsCodeLoaded] = useState(false);
 
@@ -126,13 +139,69 @@ const MessageBubble = ({ message }) => {
     setIsCodeLoaded(true);
   }, []);
 
-  const formatMessageTime = (timestamp) => {
-    const date = new Date(timestamp);
-    return date.toLocaleTimeString([], { 
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true
-    });
+  // Clean code content
+  const cleanCodeContent = (content) => {
+    if (Array.isArray(content)) {
+      return content
+        .map(child => {
+          if (typeof child === 'string') return child;
+          if (child?.props?.children) return cleanCodeContent(child.props.children);
+          return '';
+        })
+        .join('')
+        .replace(/^(```\w*\n|\n```$)/g, '')
+        .trim();
+    }
+    return String(content).replace(/^(```\w*\n|\n```$)/g, '').trim();
+  };
+
+  // Get language from className
+  const getLanguageName = (className) => {
+    if (!className) return '';
+    const match = className.match(/language-(\w+)/);
+    return match ? match[1] : '';
+  };
+
+  // Format language display name
+  const formatLanguageName = (lang) => {
+    if (!lang) return 'plaintext';
+    
+    const languageNames = {
+      'js': 'JavaScript',
+      'jsx': 'React/JSX',
+      'ts': 'TypeScript',
+      'tsx': 'React/TSX',
+      'py': 'Python',
+      'html': 'HTML',
+      'css': 'CSS',
+      'scss': 'SCSS',
+      'sql': 'SQL',
+      'bash': 'Bash',
+      'shell': 'Shell',
+      'powershell': 'PowerShell',
+      'ps1': 'PowerShell',
+      'java': 'Java',
+      'cpp': 'C++',
+      'c': 'C',
+      'cs': 'C#',
+      'go': 'Go',
+      'rust': 'Rust',
+      'rb': 'Ruby',
+      'php': 'PHP',
+      'kt': 'Kotlin',
+      'swift': 'Swift',
+      'dart': 'Dart',
+      'json': 'JSON',
+      'yaml': 'YAML',
+      'xml': 'XML',
+      'markdown': 'Markdown',
+      'md': 'Markdown',
+      'dockerfile': 'Dockerfile',
+      'plaintext': 'Plain Text'
+    };
+
+    const normalizedLang = lang.toLowerCase();
+    return languageNames[normalizedLang] || lang.charAt(0).toUpperCase() + lang.slice(1);
   };
 
   // Helper function to clean code content
@@ -212,14 +281,14 @@ const MessageBubble = ({ message }) => {
     >
       <div className={`message ${message.isUser ? 'user-message' : 'bot-message'}`}>
         <div className="message-header">
-          <span className="message-icon unselectable">
+          <span className="message-icon">
             {message.isUser ? '👤' : '🤖'}
           </span>
-          <span className="message-time unselectable">
+          <span className="message-time">
             {formatMessageTime(message.timestamp)}
           </span>
         </div>
-        <div className="message-text selectable">
+        <div className="message-text">
           {message.isUser ? (
             <span className="selectable">{message.text}</span>
           ) : (
@@ -233,10 +302,7 @@ const MessageBubble = ({ message }) => {
 
                   if (inline) {
                     return (
-                      <code 
-                        className="md-inline-code selectable" 
-                        {...filteredProps}
-                      >
+                      <code className="md-inline-code" {...filteredProps}>
                         {children}
                       </code>
                     );
@@ -247,108 +313,73 @@ const MessageBubble = ({ message }) => {
                   const cleanedCode = cleanCodeContent(children);
 
                   return (
-                    <div 
-                      className="code-block-wrapper"
-                      onMouseDown={(e) => e.stopPropagation()}
-                    >
-                      <div className="code-block-header">
-                        <span className="code-language unselectable">
-                          {displayLanguage}
-                        </span>
-                        <CopyButton text={cleanedCode} />
-                      </div>
-                      <pre 
-                        className="md-pre selectable"
-                        onMouseDown={(e) => e.stopPropagation()}
+                    <div className="code-block-wrapper">
+                      <CopyButton text={children} />
+                      <code 
+                        className={`md-code-block ${isCodeLoaded ? 'loaded' : ''} ${className || ''}`}
+                        {...filteredProps}
                       >
-                        <code
-                          className={`md-code-block selectable ${
-                            isCodeLoaded ? 'loaded' : ''
-                          } ${className || ''}`}
-                          {...filteredProps}
-                        >
-                          {cleanedCode}
-                        </code>
-                      </pre>
+                        {children}
+                      </code>
                     </div>
                   );
                 },
-                p: ({children, ...props}) => (
-                  <p className="md-p selectable" {...props}>{children}</p>
-                ),
-                h1: ({children, ...props}) => (
-                  <h1 className="md-h1 selectable" {...props}>{children}</h1>
-                ),
-                h2: ({children, ...props}) => (
-                  <h2 className="md-h2 selectable" {...props}>{children}</h2>
-                ),
-                h3: ({children, ...props}) => (
-                  <h3 className="md-h3 selectable" {...props}>{children}</h3>
-                ),
-                ul: ({children, ...props}) => {
+                pre: ({children, ...props}) => {
                   const filteredProps = {...props};
-                  delete filteredProps.ordered;
-                  return (
-                    <ul className="md-ul selectable" {...filteredProps}>
-                      {children}
-                    </ul>
-                  );
+                  delete filteredProps.node;
+                  return <pre className="md-pre pre-highlight" {...filteredProps}>{children}</pre>;
                 },
-                ol: ({children, ...props}) => {
+                h1: ({children, ...props}) => {
                   const filteredProps = {...props};
-                  delete filteredProps.ordered;
-                  return (
-                    <ol className="md-ol selectable" {...filteredProps}>
-                      {children}
-                    </ol>
-                  );
+                  delete filteredProps.node;
+                  return <blockquote className="md-blockquote" {...filteredProps}>{children}</blockquote>;
                 },
-                li: ({children, ...props}) => {
-                  const filteredProps = {...props};
-                  delete filteredProps.ordered;
-                  return (
-                    <li className="md-li selectable" {...filteredProps}>
-                      {children}
-                    </li>
-                  );
-                },
-                blockquote: ({children, ...props}) => {
+                h2: ({children, ...props}) => {
                   const filteredProps = {...props};
                   delete filteredProps.node;
                   return (
-                    <blockquote className="md-blockquote selectable" {...filteredProps}>
-                      {children}
-                    </blockquote>
-                  );
-                },
-                table: ({children, ...props}) => {
-                  const filteredProps = {...props};
-                  delete filteredProps.node;
-                  return (
-                    <div className="table-container selectable">
+                    <div className="table-container">
                       <table className="md-table" {...filteredProps}>
                         {children}
                       </table>
                     </div>
                   );
                 },
-                th: ({children, ...props}) => {
+                h3: ({children, ...props}) => {
                   const filteredProps = {...props};
                   delete filteredProps.node;
-                  return (
-                    <th className="md-th selectable" {...filteredProps}>
-                      {children}
-                    </th>
-                  );
+                  return <th className="md-th" {...filteredProps}>{children}</th>;
                 },
                 td: ({children, ...props}) => {
                   const filteredProps = {...props};
                   delete filteredProps.node;
+                  return <td className="md-td" {...filteredProps}>{children}</td>;
+                },
+                input: ({...props}) => {
+                  const filteredProps = {...props};
+                  delete filteredProps.node;
                   return (
-                    <td className="md-td selectable" {...filteredProps}>
-                      {children}
-                    </td>
+                    <input
+                      {...filteredProps}
+                      disabled
+                      style={{ marginRight: '0.5em' }}
+                    />
                   );
+                },
+                del: ({children, ...props}) => {
+                  const filteredProps = {...props};
+                  delete filteredProps.node;
+                  return <del className="md-del" {...filteredProps}>{children}</del>;
+                },
+                em: ({children, ...props}) => {
+                  const filteredProps = {...props};
+                  delete filteredProps.node;
+                  return <em className="md-em" {...filteredProps}>{children}</em>;
+                },
+                strong: ({children, ...props}) => {
+                  const filteredProps = {...props};
+                  delete filteredProps.node;
+                  return <strong className="md-strong" {...filteredProps}>{children}</strong>;
                 },
                 a: ({children, ...props}) => {
                   const filteredProps = {...props};
@@ -375,18 +406,7 @@ const MessageBubble = ({ message }) => {
                       {...filteredProps}
                     />
                   );
-                },
-                em: ({children, ...props}) => (
-                  <em className="md-em selectable" {...props}>{children}</em>
-                ),
-                strong: ({children, ...props}) => (
-                  <strong className="md-strong selectable" {...props}>
-                    {children}
-                  </strong>
-                ),
-                del: ({children, ...props}) => (
-                  <del className="md-del selectable" {...props}>{children}</del>
-                )
+                }
               }}
             >
               {message.text}
@@ -413,16 +433,7 @@ export default function Chat() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [currentDateTime, setCurrentDateTime] = useState(() => {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    const seconds = String(now.getSeconds()).padStart(2, '0');
-    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-  });
+  const [currentDateTime, setCurrentDateTime] = useState(formatDateTime());
   const [username] = useState('GM9125');
   
   const messagesEndRef = useRef(null);
@@ -434,21 +445,21 @@ export default function Chat() {
 
   // Update current date time every minute
   useEffect(() => {
+    let isMounted = true;
+  
     const updateDateTime = () => {
-      const now = new Date();
-      const year = now.getFullYear();
-      const month = String(now.getMonth() + 1).padStart(2, '0');
-      const day = String(now.getDate()).padStart(2, '0');
-      const hours = String(now.getHours()).padStart(2, '0');
-      const minutes = String(now.getMinutes()).padStart(2, '0');
-      const seconds = String(now.getSeconds()).padStart(2, '0');
-      setCurrentDateTime(`${year}-${month}-${day} ${hours}:${minutes}:${seconds}`);
+      if (isMounted) {
+        setCurrentDateTime(formatDateTime());
+      }
     };
-    
-    updateDateTime(); // Update immediately
+  
+    updateDateTime(); // Initial update
     const timer = setInterval(updateDateTime, 1000); // Update every second
-    
-    return () => clearInterval(timer);
+  
+    return () => {
+      isMounted = false;
+      clearInterval(timer);
+    };
   }, []);
 
   useEffect(() => {
@@ -541,18 +552,18 @@ export default function Chat() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
-
+  
     const userMessage = input.trim();
     setInput('');
     setError(null);
-
+  
     const newMessage = {
       id: Date.now(),
       text: userMessage,
       isUser: true,
       timestamp: new Date().toISOString()
     };
-
+  
     setChats(prev => prev.map(chat => 
       chat.id === currentChatId
         ? {
@@ -562,34 +573,47 @@ export default function Chat() {
           }
         : chat
     ));
-
+  
     setIsLoading(true);
-
+  
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
+  
       const response = await fetch('http://localhost:5000/chat', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: userMessage }),
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({ 
+          message: userMessage,
+          timestamp: formatDateTime(),
+          username: username 
+        }),
+        signal: controller.signal
       });
-
+  
+      clearTimeout(timeoutId);
+  
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error(`Server Error: ${response.status} ${response.statusText}`);
       }
-
+  
       const data = await response.json();
       
       if (data.status === 'error') {
         throw new Error(data.error);
       }
-
+  
       if (data.response) {
         const botMessage = {
           id: Date.now(),
           text: data.response.trim(),
           isUser: false,
-          timestamp: new Date().toISOString()
+          timestamp: data.timestamp || new Date().toISOString()
         };
-
+  
         setChats(prev => prev.map(chat =>
           chat.id === currentChatId
             ? { ...chat, messages: [...chat.messages, botMessage] }
@@ -598,7 +622,32 @@ export default function Chat() {
       }
     } catch (error) {
       console.error('Error:', error);
-      setError(`Failed to send message: ${error.message}`);
+      let errorMessage = 'Failed to send message: ';
+      
+      if (error.name === 'AbortError') {
+        errorMessage += 'Request timed out';
+      } else if (error.message.includes('NetworkError')) {
+        errorMessage += 'Network connection error';
+      } else {
+        errorMessage += error.message;
+      }
+      
+      setError(errorMessage);
+      
+      // Add error message to chat
+      const errorBotMessage = {
+        id: Date.now(),
+        text: `⚠️ ${errorMessage}`,
+        isUser: false,
+        isError: true,
+        timestamp: formatDateTime()
+      };
+  
+      setChats(prev => prev.map(chat =>
+        chat.id === currentChatId
+          ? { ...chat, messages: [...chat.messages, errorBotMessage] }
+          : chat
+      ));
     } finally {
       setIsLoading(false);
     }

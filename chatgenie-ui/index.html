@@ -3,13 +3,146 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/ChatGenie-logo.png" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Fira+Code&display=swap" rel="stylesheet">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ChatGenie</title>
+
+    <!-- KaTeX CSS -->
+    <link 
+      rel="stylesheet" 
+      href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css"
+    />
+
+    <!-- Fira Code font -->
+    <link 
+      href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=swap" 
+      rel="stylesheet"
+    />
+
+    <!-- Highlight.js CSS -->
+    <link 
+      rel="stylesheet" 
+      href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css"
+    />
+
+    <style>
+      /* Prevent FOUC and ensure proper loading */
+      body {
+        opacity: 0;
+        transition: opacity 0.2s ease-in;
+      }
+
+      body.loaded {
+        opacity: 1;
+      }
+
+      .md-code-block:not(.loaded) {
+        visibility: hidden;
+      }
+      
+      .md-code-block.loaded {
+        visibility: visible;
+        transition: visibility 0.1s ease-in;
+      }
+
+      /* DateTime and user info styles */
+      .datetime-detail {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 4px 8px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 4px;
+      }
+
+      .datetime {
+        font-family: 'Fira Code', monospace;
+        font-size: 0.85rem;
+        letter-spacing: -0.5px;
+        color: rgba(255, 255, 255, 0.8);
+      }
+
+      .user-info {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding: 12px;
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 8px;
+        margin-bottom: 16px;
+      }
+
+      .user-detail {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 4px 8px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 4px;
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>
+
+    <!-- Highlight.js Core -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+
+    <!-- Initialize Highlight.js and handle page load -->
+    <script>
+      // Handle page load to prevent FOUC
+      window.addEventListener('load', () => {
+        document.body.classList.add('loaded');
+      });
+
+      document.addEventListener('DOMContentLoaded', () => {
+        try {
+          // Configure Highlight.js
+          hljs.configure({
+            ignoreUnescapedHTML: true,
+            throwUnescapedHTML: false,
+            languages: ['xml', 'javascript', 'css', 'html', 'typescript', 'json', 'markdown']
+          });
+
+          function initializeHighlighting() {
+            document.querySelectorAll('pre code:not(.hljs)').forEach((el) => {
+              if (!el.classList.contains('hljs')) {
+                try {
+                  hljs.highlightElement(el);
+                } catch (e) {
+                  console.warn('Highlighting failed for element:', e);
+                }
+              }
+            });
+          }
+
+          // Initial highlighting
+          initializeHighlighting();
+
+          // Watch for new code blocks
+          const observer = new MutationObserver((mutations) => {
+            const shouldHighlight = mutations.some(mutation => 
+              Array.from(mutation.addedNodes).some(node => 
+                node.querySelector && node.querySelector('pre code')
+              )
+            );
+            
+            if (shouldHighlight) {
+              requestAnimationFrame(initializeHighlighting);
+            }
+          });
+
+          observer.observe(document.body, {
+            childList: true,
+            subtree: true
+          });
+
+        } catch (error) {
+          console.error('Highlight.js initialization failed:', error);
+        }
+      });
+    </script>
+    
+    <!-- Main app -->
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
