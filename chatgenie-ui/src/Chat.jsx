@@ -33,6 +33,79 @@ const TYPING_TIMEOUT = 3000;
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000;
 
+// Add formatMessageTime utility function
+const formatMessageTime = (timestamp) => {
+  const date = new Date(timestamp);
+  return date.toLocaleTimeString('en-US', {
+    hour12: false,
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+};
+
+// Utility functions for code handling
+const cleanCodeContent = (content) => {
+  if (Array.isArray(content)) {
+    return content
+      .map(child => {
+        if (typeof child === 'string') return child;
+        if (child?.props?.children) return cleanCodeContent(child.props.children);
+        return '';
+      })
+      .join('')
+      .replace(/^(```\w*\n|\n```$)/g, '')
+      .trim();
+  }
+  return String(content).replace(/^(```\w*\n|\n```$)/g, '').trim();
+};
+
+const getLanguageName = (className) => {
+  if (!className) return '';
+  const match = className.match(/language-(\w+)/);
+  return match ? match[1] : '';
+};
+
+const formatLanguageName = (lang) => {
+  if (!lang) return 'plaintext';
+  
+  const languageNames = {
+    'js': 'JavaScript',
+    'jsx': 'React/JSX',
+    'ts': 'TypeScript',
+    'tsx': 'React/TSX',
+    'py': 'Python',
+    'html': 'HTML',
+    'css': 'CSS',
+    'scss': 'SCSS',
+    'sql': 'SQL',
+    'bash': 'Bash',
+    'shell': 'Shell',
+    'powershell': 'PowerShell',
+    'ps1': 'PowerShell',
+    'java': 'Java',
+    'cpp': 'C++',
+    'c': 'C',
+    'cs': 'C#',
+    'go': 'Go',
+    'rust': 'Rust',
+    'rb': 'Ruby',
+    'php': 'PHP',
+    'kt': 'Kotlin',
+    'swift': 'Swift',
+    'dart': 'Dart',
+    'json': 'JSON',
+    'yaml': 'YAML',
+    'xml': 'XML',
+    'markdown': 'Markdown',
+    'md': 'Markdown',
+    'dockerfile': 'Dockerfile',
+    'plaintext': 'Plain Text'
+  };
+
+  const normalizedLang = lang.toLowerCase();
+  return languageNames[normalizedLang] || lang.charAt(0).toUpperCase() + lang.slice(1);
+};
+
 // Animated Icon Component
 const AnimatedIcon = () => (
   <div className="animated-icon-wrapper">
@@ -131,142 +204,12 @@ const UserInfo = ({ username, currentDateTime }) => (
     </div>
   </div>
 );
-
 const MessageBubble = ({ message }) => {
   const [isCodeLoaded, setIsCodeLoaded] = useState(false);
 
   useEffect(() => {
     setIsCodeLoaded(true);
   }, []);
-
-  // Clean code content
-  const cleanCodeContent = (content) => {
-    if (Array.isArray(content)) {
-      return content
-        .map(child => {
-          if (typeof child === 'string') return child;
-          if (child?.props?.children) return cleanCodeContent(child.props.children);
-          return '';
-        })
-        .join('')
-        .replace(/^(```\w*\n|\n```$)/g, '')
-        .trim();
-    }
-    return String(content).replace(/^(```\w*\n|\n```$)/g, '').trim();
-  };
-
-  // Get language from className
-  const getLanguageName = (className) => {
-    if (!className) return '';
-    const match = className.match(/language-(\w+)/);
-    return match ? match[1] : '';
-  };
-
-  // Format language display name
-  const formatLanguageName = (lang) => {
-    if (!lang) return 'plaintext';
-    
-    const languageNames = {
-      'js': 'JavaScript',
-      'jsx': 'React/JSX',
-      'ts': 'TypeScript',
-      'tsx': 'React/TSX',
-      'py': 'Python',
-      'html': 'HTML',
-      'css': 'CSS',
-      'scss': 'SCSS',
-      'sql': 'SQL',
-      'bash': 'Bash',
-      'shell': 'Shell',
-      'powershell': 'PowerShell',
-      'ps1': 'PowerShell',
-      'java': 'Java',
-      'cpp': 'C++',
-      'c': 'C',
-      'cs': 'C#',
-      'go': 'Go',
-      'rust': 'Rust',
-      'rb': 'Ruby',
-      'php': 'PHP',
-      'kt': 'Kotlin',
-      'swift': 'Swift',
-      'dart': 'Dart',
-      'json': 'JSON',
-      'yaml': 'YAML',
-      'xml': 'XML',
-      'markdown': 'Markdown',
-      'md': 'Markdown',
-      'dockerfile': 'Dockerfile',
-      'plaintext': 'Plain Text'
-    };
-
-    const normalizedLang = lang.toLowerCase();
-    return languageNames[normalizedLang] || lang.charAt(0).toUpperCase() + lang.slice(1);
-  };
-
-  // Helper function to clean code content
-  const cleanCodeContent = (code) => {
-    if (typeof code === 'string') {
-      return code.replace(/^(```\w*\n|\n```$)/g, '').trim();
-    }
-    if (Array.isArray(code)) {
-      return code
-        .map(child => typeof child === 'string' ? child : child?.props?.children || '')
-        .join('')
-        .replace(/^(```\w*\n|\n```$)/g, '')
-        .trim();
-    }
-    return '';
-  };
-
-  // Helper function to get language name
-  const getLanguageName = (className) => {
-    if (!className) return null;
-    const match = className.match(/language-(\w+)/);
-    return match ? match[1] : null;
-  };
-
-  // Helper function to format language display name
-  const formatLanguageName = (lang) => {
-    if (!lang) return 'plaintext';
-    
-    const languageNames = {
-      'js': 'JavaScript',
-      'jsx': 'React/JSX',
-      'ts': 'TypeScript',
-      'tsx': 'React/TSX',
-      'py': 'Python',
-      'html': 'HTML',
-      'css': 'CSS',
-      'scss': 'SCSS',
-      'sql': 'SQL',
-      'bash': 'Bash',
-      'shell': 'Shell',
-      'powershell': 'PowerShell',
-      'ps1': 'PowerShell',
-      'java': 'Java',
-      'cpp': 'C++',
-      'c': 'C',
-      'cs': 'C#',
-      'go': 'Go',
-      'rust': 'Rust',
-      'rb': 'Ruby',
-      'php': 'PHP',
-      'kt': 'Kotlin',
-      'swift': 'Swift',
-      'dart': 'Dart',
-      'json': 'JSON',
-      'yaml': 'YAML',
-      'xml': 'XML',
-      'markdown': 'Markdown',
-      'md': 'Markdown',
-      'dockerfile': 'Dockerfile',
-      'plaintext': 'Plain Text'
-    };
-
-    const normalizedLang = lang.toLowerCase();
-    return languageNames[normalizedLang] || lang.charAt(0).toUpperCase() + lang.slice(1);
-  };
 
   const handleMessageClick = (e) => {
     if (e.target.closest('.btn-copy')) return;
@@ -280,14 +223,6 @@ const MessageBubble = ({ message }) => {
       onMouseDown={(e) => e.stopPropagation()}
     >
       <div className={`message ${message.isUser ? 'user-message' : 'bot-message'}`}>
-        <div className="message-header">
-          <span className="message-icon">
-            {message.isUser ? '👤' : '🤖'}
-          </span>
-          <span className="message-time">
-            {formatMessageTime(message.timestamp)}
-          </span>
-        </div>
         <div className="message-text">
           {message.isUser ? (
             <span className="selectable">{message.text}</span>
@@ -302,8 +237,8 @@ const MessageBubble = ({ message }) => {
 
                   if (inline) {
                     return (
-                      <code className="md-inline-code" {...filteredProps}>
-                        {children}
+                      <code className="md-inline-code selectable" {...filteredProps}>
+                        {cleanCodeContent(children)}
                       </code>
                     );
                   }
@@ -314,72 +249,114 @@ const MessageBubble = ({ message }) => {
 
                   return (
                     <div className="code-block-wrapper">
-                      <CopyButton text={children} />
-                      <code 
-                        className={`md-code-block ${isCodeLoaded ? 'loaded' : ''} ${className || ''}`}
-                        {...filteredProps}
-                      >
-                        {children}
-                      </code>
+                      <div className="code-block-header">
+                        <span className="code-language unselectable">
+                          {displayLanguage}
+                        </span>
+                        <CopyButton text={cleanedCode} />
+                      </div>
+                      <pre className="md-pre selectable">
+                        <code
+                          className={`md-code-block selectable ${
+                            isCodeLoaded ? 'loaded' : ''
+                          } ${className || ''}`}
+                          {...filteredProps}
+                        >
+                          {cleanedCode}
+                        </code>
+                      </pre>
                     </div>
                   );
                 },
-                pre: ({children, ...props}) => {
+                p: ({children, ...props}) => {
                   const filteredProps = {...props};
                   delete filteredProps.node;
-                  return <pre className="md-pre pre-highlight" {...filteredProps}>{children}</pre>;
+                  return (
+                    <p className="md-p selectable" {...filteredProps}>{children}</p>
+                  );
                 },
                 h1: ({children, ...props}) => {
                   const filteredProps = {...props};
                   delete filteredProps.node;
-                  return <blockquote className="md-blockquote" {...filteredProps}>{children}</blockquote>;
+                  return (
+                    <h1 className="md-h1 selectable" {...filteredProps}>{children}</h1>
+                  );
                 },
                 h2: ({children, ...props}) => {
                   const filteredProps = {...props};
                   delete filteredProps.node;
                   return (
-                    <div className="table-container">
-                      <table className="md-table" {...filteredProps}>
-                        {children}
-                      </table>
-                    </div>
+                    <h2 className="md-h2 selectable" {...filteredProps}>{children}</h2>
                   );
                 },
                 h3: ({children, ...props}) => {
                   const filteredProps = {...props};
                   delete filteredProps.node;
-                  return <th className="md-th" {...filteredProps}>{children}</th>;
+                  return (
+                    <h3 className="md-h3 selectable" {...filteredProps}>{children}</h3>
+                  );
+                },
+                ul: ({children, ...props}) => {
+                  const filteredProps = {...props};
+                  delete filteredProps.ordered;
+                  delete filteredProps.node;
+                  return (
+                    <ul className="md-ul selectable" {...filteredProps}>
+                      {children}
+                    </ul>
+                  );
+                },
+                ol: ({children, ...props}) => {
+                  const filteredProps = {...props};
+                  delete filteredProps.ordered;
+                  delete filteredProps.node;
+                  return (
+                    <ol className="md-ol selectable" {...filteredProps}>
+                      {children}
+                    </ol>
+                  );
+                },
+                li: ({children, ...props}) => {
+                  const filteredProps = {...props};
+                  delete filteredProps.ordered;
+                  delete filteredProps.node;
+                  return (
+                    <li className="md-li selectable" {...filteredProps}>
+                      {children}
+                    </li>
+                  );
+                },
+                blockquote: ({children, ...props}) => {
+                  const filteredProps = {...props};
+                  delete filteredProps.node;
+                  return (
+                    <blockquote className="md-blockquote selectable" {...filteredProps}>
+                      {children}
+                    </blockquote>
+                  );
+                },
+                table: ({children, ...props}) => {
+                  const filteredProps = {...props};
+                  delete filteredProps.node;
+                  return (
+                    <div className="table-container selectable">
+                      <table className="md-table" {...filteredProps}>{children}</table>
+                    </div>
+                  );
+                },
+                th: ({children, ...props}) => {
+                  const filteredProps = {...props};
+                  delete filteredProps.node;
+                  return (
+                    <th className="md-th selectable" {...filteredProps}>{children}</th>
+                  );
                 },
                 td: ({children, ...props}) => {
                   const filteredProps = {...props};
                   delete filteredProps.node;
-                  return <td className="md-td" {...filteredProps}>{children}</td>;
-                },
-                input: ({...props}) => {
-                  const filteredProps = {...props};
-                  delete filteredProps.node;
                   return (
-                    <input
-                      {...filteredProps}
-                      disabled
-                      style={{ marginRight: '0.5em' }}
-                    />
+                    <td className="md-td selectable" {...filteredProps}>{children}</td>
                   );
-                },
-                del: ({children, ...props}) => {
-                  const filteredProps = {...props};
-                  delete filteredProps.node;
-                  return <del className="md-del" {...filteredProps}>{children}</del>;
-                },
-                em: ({children, ...props}) => {
-                  const filteredProps = {...props};
-                  delete filteredProps.node;
-                  return <em className="md-em" {...filteredProps}>{children}</em>;
-                },
-                strong: ({children, ...props}) => {
-                  const filteredProps = {...props};
-                  delete filteredProps.node;
-                  return <strong className="md-strong" {...filteredProps}>{children}</strong>;
                 },
                 a: ({children, ...props}) => {
                   const filteredProps = {...props};
@@ -405,6 +382,29 @@ const MessageBubble = ({ message }) => {
                       loading="lazy"
                       {...filteredProps}
                     />
+                  );
+                },
+                em: ({children, ...props}) => {
+                  const filteredProps = {...props};
+                  delete filteredProps.node;
+                  return (
+                    <em className="md-em selectable" {...filteredProps}>{children}</em>
+                  );
+                },
+                strong: ({children, ...props}) => {
+                  const filteredProps = {...props};
+                  delete filteredProps.node;
+                  return (
+                    <strong className="md-strong selectable" {...filteredProps}>
+                      {children}
+                    </strong>
+                  );
+                },
+                del: ({children, ...props}) => {
+                  const filteredProps = {...props};
+                  delete filteredProps.node;
+                  return (
+                    <del className="md-del selectable" {...filteredProps}>{children}</del>
                   );
                 }
               }}

@@ -144,7 +144,6 @@ body {
   scroll-padding-bottom: 20px;
   will-change: scroll-position;
 }
-<<<<<<< HEAD
 
 .message-row {
   display: flex;
@@ -157,52 +156,6 @@ body {
   max-width: var(--container-width);
   margin: 0 auto;
   width: 100%;
-=======
-.message.error {
-  background: rgba(220, 38, 38, 0.1);
-  border: 1px solid rgba(220, 38, 38, 0.2);
-}
-
-.message.error .message-text {
-  color: #fee2e2;
-}
-
-.error-icon {
-  margin-right: 8px;
-  color: #dc2626;
-}
-.message-row {
-  display: flex;
-  padding: var(--spacing-sm) var(--spacing-md);
-  width: 100%;
-  animation: messageIn var(--transition-normal) forwards;
-}
-.message-content {
-  max-width: var(--container-width);
-  margin: 0 auto;
-  width: 100%;
-  display: flex;
-}
-
-.message-container {
-  max-width: 80%;
-  width: fit-content;
-}
-
-/* Adjust message row spacing */
-.message-row {
-  margin-bottom: var(--spacing-sm);
-}
-
-/* Remove last message row margin */
-.message-row:last-child {
-  margin-bottom: 0;
-}
-.message-content {
-  max-width: var(--container-width);
-  margin: 0 auto;
-  width: 100%;
->>>>>>> 968551d (fixed a lot)
   display: flex;
 }
 
@@ -449,11 +402,8 @@ code {
 .md-pre {
   margin: 0;
   padding: 0;
-<<<<<<< HEAD
   background: transparent;
   white-space: pre;
-=======
->>>>>>> 968551d (fixed a lot)
 }
 
 .md-blockquote {
@@ -1222,20 +1172,11 @@ p, span, h1, h2, h3, h4, h5, h6, li, td, th, code, pre {
 .code-block-wrapper {
   position: relative;
   margin: var(--spacing-sm) 0;
-<<<<<<< HEAD
   width: 100%;
   background: rgba(0, 0, 0, 0.3);
   border-radius: var(--border-radius-sm);
   border: 1px solid var(--border-color);
   overflow: hidden;
-=======
-  background: #282a36;
-  border: 1px solid #44475a;
-  border-radius: var(--border-radius-sm);
-  overflow: hidden;
-  outline: none;
-  tab-size: 2;
->>>>>>> 968551d (fixed a lot)
 }
 
 .code-block-header {
@@ -1243,30 +1184,18 @@ p, span, h1, h2, h3, h4, h5, h6, li, td, th, code, pre {
   justify-content: space-between;
   align-items: center;
   padding: 8px 12px;
-<<<<<<< HEAD
   background: rgba(255, 255, 255, 0.05);
   border-bottom: 1px solid var(--border-color);
   width: 100%;
-=======
-  background: #1e1f29;
-  border-bottom: 1px solid #44475a;
->>>>>>> 968551d (fixed a lot)
 }
 
 .code-language {
   font-family: 'Fira Code', monospace;
   font-size: 0.8em;
-<<<<<<< HEAD
   color: #8bb9fe;
   opacity: 0.8;
   text-transform: capitalize;
 }
-=======
-  color: #6272a4;
-  text-transform: capitalize;
-}
-
->>>>>>> 968551d (fixed a lot)
 .selectable {
   user-select: text !important;
   -webkit-user-select: text !important;
@@ -1286,7 +1215,6 @@ p, span, h1, h2, h3, h4, h5, h6, li, td, th, code, pre {
 .md-code-block {
   display: block;
   padding: 1em;
-<<<<<<< HEAD
   margin: 0;
   overflow-x: auto;
   font-family: 'Fira Code', monospace;
@@ -1296,39 +1224,12 @@ p, span, h1, h2, h3, h4, h5, h6, li, td, th, code, pre {
   color: #e5e7eb;
   background: transparent;
 }
-=======
-  overflow-x: auto;
-  background: transparent;
-  color: #f8f8f2;
-  font-family: 'Fira Code', monospace;
-  font-size: 0.9em;
-  line-height: 1.5;
-}
-.md-code-block:focus-visible {
-  outline: 2px solid var(--primary-color);
-  outline-offset: -2px;
-}
-.hljs-keyword { color: #ff79c6; }
-.hljs-string { color: #f1fa8c; }
-.hljs-comment { color: #6272a4; }
-.hljs-function { color: #50fa7b; }
-.hljs-number { color: #bd93f9; }
-.hljs-operator { color: #ff79c6; }
-.hljs-class { color: #8be9fd; }
-.hljs-tag { color: #ff79c6; }
-.hljs-attr { color: #50fa7b; }
-.hljs-symbol { color: #f1fa8c; }
-.hljs-meta { color: #6272a4; }
->>>>>>> 968551d (fixed a lot)
 
 /* Prevent selection for interactive elements */
 button, 
 .btn-copy,
-<<<<<<< HEAD
 .message-icon,
 .message-time,
-=======
->>>>>>> 968551d (fixed a lot)
 .header-actions,
 .sidebar-toggle,
 svg,
@@ -1373,41 +1274,18 @@ svg,
 
 /* Fix inline code selection */
 .md-inline-code {
-<<<<<<< HEAD
   user-select: text !important;
   -webkit-user-select: text !important;
   -moz-user-select: text !important;
   -ms-user-select: text !important;
   background: rgba(255, 255, 255, 0.1);
-=======
-  background: var(--code-bg);
->>>>>>> 968551d (fixed a lot)
   padding: 2px 6px;
   border-radius: 4px;
   font-family: 'Fira Code', monospace;
   font-size: 0.9em;
-<<<<<<< HEAD
   color: #a5b4fc;
 }
 
-=======
-  color: var(--code-text);
-}
-/* Code Block Scrollbar */
-.md-code-block::-webkit-scrollbar {
-  height: 8px;
-  background: var(--code-header-bg);
-}
-
-.md-code-block::-webkit-scrollbar-thumb {
-  background: var(--code-border);
-  border-radius: 4px;
-}
-
-.md-code-block::-webkit-scrollbar-thumb:hover {
-  background: var(--code-comment);
-}
->>>>>>> 968551d (fixed a lot)
 /* Ensure copy button doesn't interfere with selection */
 .btn-copy {
   pointer-events: auto !important;
