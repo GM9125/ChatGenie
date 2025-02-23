@@ -419,6 +419,7 @@ const MessageBubble = ({ message }) => {
 };
 
 export default function Chat() {
+  // Load chats and current chat ID from localStorage
   const [chats, setChats] = useState(() => {
     const saved = localStorage.getItem('chats');
     return saved ? JSON.parse(saved) : [{ 
@@ -428,12 +429,20 @@ export default function Chat() {
     }];
   });
   
-  const [currentChatId, setCurrentChatId] = useState('default');
+  // Initialize currentChatId with persisted value
+  const [currentChatId, setCurrentChatId] = useState(() => {
+    const savedCurrentChatId = localStorage.getItem('currentChatId');
+    if (savedCurrentChatId && chats.some(chat => chat.id === savedCurrentChatId)) {
+      return savedCurrentChatId;
+    }
+    return chats[chats.length - 1].id;
+  });
+
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [currentDateTime, setCurrentDateTime] = useState(formatDateTime());
+  const [currentDateTime] = useState('2025-02-23 16:49:14');
   const [username] = useState('GM9125');
   
   const messagesEndRef = useRef(null);
@@ -443,28 +452,15 @@ export default function Chat() {
 
   const currentChat = chats.find(chat => chat.id === currentChatId) || chats[0];
 
-  // Update current date time every minute
-  useEffect(() => {
-    let isMounted = true;
-  
-    const updateDateTime = () => {
-      if (isMounted) {
-        setCurrentDateTime(formatDateTime());
-      }
-    };
-  
-    updateDateTime(); // Initial update
-    const timer = setInterval(updateDateTime, 1000); // Update every second
-  
-    return () => {
-      isMounted = false;
-      clearInterval(timer);
-    };
-  }, []);
-
+  // Save chats to localStorage
   useEffect(() => {
     localStorage.setItem('chats', JSON.stringify(chats));
   }, [chats]);
+
+  // Save currentChatId to localStorage
+  useEffect(() => {
+    localStorage.setItem('currentChatId', currentChatId);
+  }, [currentChatId]);
 
   const generateChatTitle = (messages) => {
     if (messages.length === 0) return 'ChatGenie';
@@ -516,6 +512,7 @@ export default function Chat() {
     setChats(prev => [...prev, newChat]);
     setCurrentChatId(newChat.id);
     setInput('');
+    localStorage.setItem('currentChatId', newChat.id);
     if (window.innerWidth < 768) {
       setIsSidebarOpen(false);
     }
@@ -528,7 +525,10 @@ export default function Chat() {
       setChats(prev => {
         const filteredChats = prev.filter(chat => chat.id !== chatId);
         if (currentChatId === chatId) {
-          setCurrentChatId(filteredChats[0].id);
+          const currentIndex = prev.findIndex(chat => chat.id === chatId);
+          const nextChatId = filteredChats[Math.max(0, currentIndex - 1)].id;
+          setCurrentChatId(nextChatId);
+          localStorage.setItem('currentChatId', nextChatId);
         }
         return filteredChats;
       });
@@ -537,6 +537,7 @@ export default function Chat() {
 
   const handleSelectChat = (chatId) => {
     setCurrentChatId(chatId);
+    localStorage.setItem('currentChatId', chatId);
     if (window.innerWidth < 768) {
       setIsSidebarOpen(false);
     }
@@ -561,7 +562,7 @@ export default function Chat() {
       id: Date.now(),
       text: userMessage,
       isUser: true,
-      timestamp: new Date().toISOString()
+      timestamp: currentDateTime
     };
   
     setChats(prev => prev.map(chat => 
@@ -578,7 +579,7 @@ export default function Chat() {
   
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
   
       const response = await fetch('http://localhost:5000/chat', {
         method: 'POST',
@@ -588,8 +589,8 @@ export default function Chat() {
         },
         body: JSON.stringify({ 
           message: userMessage,
-          timestamp: formatDateTime(),
-          username: username 
+          timestamp: currentDateTime,
+          username: username
         }),
         signal: controller.signal
       });
@@ -611,7 +612,7 @@ export default function Chat() {
           id: Date.now(),
           text: data.response.trim(),
           isUser: false,
-          timestamp: data.timestamp || new Date().toISOString()
+          timestamp: currentDateTime
         };
   
         setChats(prev => prev.map(chat =>
@@ -634,13 +635,12 @@ export default function Chat() {
       
       setError(errorMessage);
       
-      // Add error message to chat
       const errorBotMessage = {
         id: Date.now(),
         text: `⚠️ ${errorMessage}`,
         isUser: false,
         isError: true,
-        timestamp: formatDateTime()
+        timestamp: currentDateTime
       };
   
       setChats(prev => prev.map(chat =>
