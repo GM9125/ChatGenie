@@ -12,7 +12,13 @@ import {
   RiHistoryLine, 
   RiArrowRightSLine,
   RiTimeLine,
-  RiUser3Line
+  RiUser3Line,
+  RiFileCopyLine,
+  RiRefreshLine,
+  RiThumbUpLine,
+  RiThumbDownLine,
+  RiThumbUpFill,
+  RiThumbDownFill
 } from 'react-icons/ri';
 import 'katex/dist/katex.min.css';
 import 'highlight.js/styles/github-dark.css';
@@ -105,6 +111,7 @@ const formatLanguageName = (lang) => {
   const normalizedLang = lang.toLowerCase();
   return languageNames[normalizedLang] || lang.charAt(0).toUpperCase() + lang.slice(1);
 };
+
 
 // Animated Icon Component
 const AnimatedIcon = () => (
@@ -204,16 +211,39 @@ const UserInfo = ({ username, currentDateTime }) => (
     </div>
   </div>
 );
-const MessageBubble = ({ message }) => {
+const MessageBubble = ({ message, onRegenerateResponse }) => {
   const [isCodeLoaded, setIsCodeLoaded] = useState(false);
+  const [isLiked, setIsLiked] = useState(false);
+  const [isDisliked, setIsDisliked] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
 
   useEffect(() => {
     setIsCodeLoaded(true);
   }, []);
 
   const handleMessageClick = (e) => {
-    if (e.target.closest('.btn-copy')) return;
+    if (e.target.closest('.btn-copy') || e.target.closest('.message-actions')) return;
     e.stopPropagation();
+  };
+
+  const handleCopyResponse = async () => {
+    try {
+      await navigator.clipboard.writeText(message.text);
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy response:', err);
+    }
+  };
+
+  const handleLike = () => {
+    setIsLiked(!isLiked);
+    setIsDisliked(false);
+  };
+
+  const handleDislike = () => {
+    setIsDisliked(!isDisliked);
+    setIsLiked(false);
   };
 
   return (
@@ -227,45 +257,46 @@ const MessageBubble = ({ message }) => {
           {message.isUser ? (
             <span className="selectable">{message.text}</span>
           ) : (
-            <ReactMarkdown
-              remarkPlugins={[remarkMath, remarkGfm]}
-              rehypePlugins={[rehypeKatex, rehypeHighlight]}
-              components={{
-                code: ({inline, className, children, ...props}) => {
-                  const filteredProps = {...props};
-                  delete filteredProps.node;
+            <>
+              <ReactMarkdown
+                remarkPlugins={[remarkMath, remarkGfm]}
+                rehypePlugins={[rehypeKatex, rehypeHighlight]}
+                components={{
+                  code: ({inline, className, children, ...props}) => {
+                    const filteredProps = {...props};
+                    delete filteredProps.node;
 
-                  if (inline) {
-                    return (
-                      <code className="md-inline-code selectable" {...filteredProps}>
-                        {cleanCodeContent(children)}
-                      </code>
-                    );
-                  }
-
-                  const languageId = getLanguageName(className);
-                  const displayLanguage = formatLanguageName(languageId);
-                  const cleanedCode = cleanCodeContent(children);
-
-                  return (
-                    <div className="code-block-wrapper">
-                      <div className="code-block-header">
-                        <span className="code-language unselectable">
-                          {displayLanguage}
-                        </span>
-                        <CopyButton text={cleanedCode} />
-                      </div>
-                      <pre className="md-pre selectable">
-                        <code
-                          className={`md-code-block selectable ${
-                            isCodeLoaded ? 'loaded' : ''
-                          } ${className || ''}`}
-                          {...filteredProps}
-                        >
-                          {cleanedCode}
+                    if (inline) {
+                      return (
+                        <code className="md-inline-code selectable" {...filteredProps}>
+                          {cleanCodeContent(children)}
                         </code>
-                      </pre>
-                    </div>
+                      );
+                    }
+
+                    const languageId = getLanguageName(className);
+                    const displayLanguage = formatLanguageName(languageId);
+                    const cleanedCode = cleanCodeContent(children);
+
+                    return (
+                      <div className="code-block-wrapper">
+                        <div className="code-block-header">
+                          <span className="code-language unselectable">
+                            {displayLanguage}
+                          </span>
+                          <CopyButton text={cleanedCode} />
+                        </div>
+                        <pre className="md-pre selectable">
+                          <code
+                            className={`md-code-block selectable ${
+                              isCodeLoaded ? 'loaded' : ''
+                            } ${className || ''}`}
+                            {...filteredProps}
+                          >
+                            {cleanedCode}
+                          </code>
+                        </pre>
+                      </div>
                   );
                 },
                 p: ({children, ...props}) => {
@@ -411,6 +442,47 @@ const MessageBubble = ({ message }) => {
             >
               {message.text}
             </ReactMarkdown>
+            
+            {!message.isUser && (
+              <div className="message-actions">
+                <div className="action-group">
+                  <button
+                    className={`action-button ${isLiked ? 'active' : ''}`}
+                    onClick={handleLike}
+                    title="Like response"
+                  >
+                    {isLiked ? <RiThumbUpFill /> : <RiThumbUpLine />}
+                  </button>
+                  <button
+                    className={`action-button ${isDisliked ? 'active' : ''}`}
+                    onClick={handleDislike}
+                    title="Dislike response"
+                  >
+                    {isDisliked ? <RiThumbDownFill /> : <RiThumbDownLine />}
+                  </button>
+                </div>
+
+                <div className="action-separator" />
+                
+                <div className="action-group">
+                  <button
+                    className="action-button"
+                    onClick={() => onRegenerateResponse(message.id)}
+                    title="Regenerate response"
+                  >
+                    <RiRefreshLine />
+                  </button>
+                  <button
+                    className={`action-button ${isCopied ? 'copied' : ''}`}
+                    onClick={handleCopyResponse}
+                    title="Copy response"
+                  >
+                    <RiFileCopyLine />
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
           )}
         </div>
       </div>
@@ -652,7 +724,91 @@ export default function Chat() {
       setIsLoading(false);
     }
   };
-
+  const handleRegenerateResponse = async (messageId) => {
+    // Find the original user message that generated this response
+    const currentMessages = currentChat.messages;
+    const botMessageIndex = currentMessages.findIndex(m => m.id === messageId);
+    if (botMessageIndex === -1 || currentMessages[botMessageIndex].isUser) return;
+  
+    // Find the last user message before this bot message
+    let userMessageIndex = botMessageIndex - 1;
+    while (userMessageIndex >= 0 && !currentMessages[userMessageIndex].isUser) {
+      userMessageIndex--;
+    }
+  
+    if (userMessageIndex < 0) return;
+    const userMessage = currentMessages[userMessageIndex];
+  
+    setIsLoading(true);
+    setError(null);
+  
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
+  
+      const response = await fetch('http://localhost:5000/chat', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({ 
+          message: userMessage.text, // Send the original user message
+          timestamp: currentDateTime,
+          username: username,
+          regenerate: true
+        }),
+        signal: controller.signal
+      });
+  
+      clearTimeout(timeoutId);
+  
+      if (!response.ok) {
+        throw new Error(`Server Error: ${response.status} ${response.statusText}`);
+      }
+  
+      const data = await response.json();
+      
+      if (data.status === 'error') {
+        throw new Error(data.error);
+      }
+  
+      if (data.response) {
+        const regeneratedMessage = {
+          id: Date.now(),
+          text: data.response.trim(),
+          isUser: false,
+          timestamp: currentDateTime
+        };
+  
+        setChats(prev => prev.map(chat =>
+          chat.id === currentChatId
+            ? {
+                ...chat,
+                messages: chat.messages.map(msg =>
+                  msg.id === messageId ? regeneratedMessage : msg
+                )
+              }
+            : chat
+        ));
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      let errorMessage = 'Failed to regenerate response: ';
+      
+      if (error.name === 'AbortError') {
+        errorMessage += 'Request timed out';
+      } else if (error.message.includes('NetworkError')) {
+        errorMessage += 'Network connection error';
+      } else {
+        errorMessage += error.message;
+      }
+      
+      setError(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
   return (
     <div className="main-container">
       <button
@@ -660,10 +816,10 @@ export default function Chat() {
         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
         title="Toggle Chat History"
       >
-        <RiArrowRightSLine className={isSidebarOpen ? 'rotate-180' : ''} />
+        <RiArrowRightSLine className={isSidebarOpen ? "rotate-180" : ""} />
       </button>
 
-      <div className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
+      <div className={`sidebar ${isSidebarOpen ? "open" : ""}`}>
         <div className="sidebar-header">
           <h3>Chat History</h3>
           <button
@@ -676,10 +832,12 @@ export default function Chat() {
         </div>
         <div className="sidebar-content">
           <UserInfo username={username} currentDateTime={currentDateTime} />
-          {chats.map(chat => (
+          {chats.map((chat) => (
             <div
               key={chat.id}
-              className={`sidebar-chat-item ${chat.id === currentChatId ? 'active' : ''}`}
+              className={`sidebar-chat-item ${
+                chat.id === currentChatId ? "active" : ""
+              }`}
               onClick={() => handleSelectChat(chat.id)}
             >
               <span className="chat-title">{chat.title}</span>
@@ -699,7 +857,7 @@ export default function Chat() {
           ))}
         </div>
       </div>
-  
+
       <div className="chat-container">
         <div className="chat-header">
           <div className="header-actions">
@@ -716,7 +874,7 @@ export default function Chat() {
             <span>ChatGenie</span>
           </div>
         </div>
-  
+
         <div ref={messagesAreaRef} className="messages-area">
           {currentChat.messages.length === 0 && (
             <div className="welcome-message">
@@ -725,18 +883,21 @@ export default function Chat() {
               <p>How can I assist you today?</p>
             </div>
           )}
-  
+
           {currentChat.messages.map((message) => (
             <div
               key={message.id}
-              className={`message-row ${message.isUser ? 'user' : 'bot'}`}
+              className={`message-row ${message.isUser ? "user" : "bot"}`}
             >
               <div className="message-content">
-                <MessageBubble message={message} />
+                <MessageBubble
+                  message={message}
+                  onRegenerateResponse={handleRegenerateResponse}
+                />
               </div>
             </div>
           ))}
-  
+
           {isLoading && (
             <div className="message-row bot">
               <div className="message-content">
@@ -748,16 +909,12 @@ export default function Chat() {
               </div>
             </div>
           )}
-  
+
           <div ref={messagesEndRef} />
         </div>
-  
-        {error && (
-          <div className="error-alert">
-            {error}
-          </div>
-        )}
-  
+
+        {error && <div className="error-alert">{error}</div>}
+
         <div className="input-area">
           <form onSubmit={handleSubmit} className="input-form">
             <textarea
