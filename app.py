@@ -68,6 +68,16 @@ def infer_language(code_line):
             r':\s*(string|number|boolean|any)\s*[;=]',
             r'^enum\s+\w+',
         ],
+        'mermaid': [
+            r'^graph\s+',
+            r'^flowchart\s+',
+            r'^sequenceDiagram',
+            r'^classDiagram',
+            r'^erDiagram',
+            r'^gantt',
+            r'^pie',
+            r'^journey'
+        ],
         'jsx': [
             r'<\w+(\s+\w+=".*?")*\s*>',
             r'React\.',
@@ -77,6 +87,20 @@ def infer_language(code_line):
             r'<\w+(\s+\w+=".*?")*\s*>.*?:\s*(string|number|boolean)',
             r'React\.',
             r'useState<',
+        ],
+        'plantuml': [
+            r'^@startuml',
+            r'^@enduml',
+            r'^entity\s+',
+            r'^class\s+.*{',
+            r'^participant\s+',
+            r'^actor\s+',
+            r'^database\s+',
+            r'^usecase\s+',
+            r'^package\s+',
+            r'^namespace\s+',
+            r'^interface\s+',
+            r'^enum\s+'
         ],
         'html': [
             r'^<!DOCTYPE\s+html>',
@@ -211,8 +235,14 @@ def format_code_blocks(text):
             if in_code_block:
                 # End of code block
                 if current_block:
-                    lang = infer_language(current_block[0])
-                    formatted_lines.append(f'```{lang}')
+                    # Special handling for diagrams
+                    if '@startuml' in current_block[0]:
+                        formatted_lines.append('```plantuml')
+                    elif 'graph' in current_block[0] or 'sequenceDiagram' in current_block[0]:
+                        formatted_lines.append('```mermaid')
+                    else:
+                        lang = infer_language(current_block[0])
+                        formatted_lines.append(f'```{lang}')
                     formatted_lines.extend(current_block)
                 formatted_lines.append('```')
                 current_block = []
@@ -222,11 +252,14 @@ def format_code_blocks(text):
                 in_code_block = True
                 # Strip any existing language identifier
                 if len(line) > 3:
-                    existing_lang = line[3:].strip()
-                    if existing_lang:
+                    existing_lang = line[3:].strip().lower()
+                    if existing_lang in ['plantuml', 'uml']:
+                        formatted_lines.append('```plantuml')
+                    elif existing_lang in ['mermaid']:
+                        formatted_lines.append('```mermaid')
+                    elif existing_lang:
                         formatted_lines.append(f'```{existing_lang}')
                     else:
-                        # Will infer language when block ends
                         continue
                 else:
                     continue
@@ -235,10 +268,22 @@ def format_code_blocks(text):
         else:
             formatted_lines.append(line)
     
+    # Handle any remaining code block
+    if in_code_block and current_block:
+        if '@startuml' in current_block[0]:
+            formatted_lines.append('```plantuml')
+        elif 'graph' in current_block[0] or 'sequenceDiagram' in current_block[0]:
+            formatted_lines.append('```mermaid')
+        else:
+            lang = infer_language(current_block[0])
+            formatted_lines.append(f'```{lang}')
+        formatted_lines.extend(current_block)
+        formatted_lines.append('```')
+    
     return '\n'.join(formatted_lines)
 
 def format_response(text):
-    """Format the response to be more like modern AI chatbots."""
+    """Format the response with enhanced styling and structure."""
     # Pre-process the text
     text = text.strip()
     
@@ -261,74 +306,117 @@ def format_response(text):
     # Format inline code
     text = re.sub(r'(?<!`)`(?!`)(.*?)(?<!`)`(?!`)', r'`\1`', text)
     
+    # Format table separators
+    text = re.sub(r'\n\|([\-:]+\|)+\n', lambda m: '\n' + m.group(0).replace(' ', '') + '\n', text)
+    
+    # Ensure proper list indentation
+    text = re.sub(r'^\s*[-*+]\s', '- ', text, flags=re.MULTILINE)
+    text = re.sub(r'^\s*\d+\.\s', lambda m: f"{m.group().rstrip()} ", text, flags=re.MULTILINE)
+    
     return text
 
 @app.route('/chat', methods=['POST'])
+
 def chat_endpoint():
-    data = request.json
-    question = data.get('message')
-
-    if not question:
-        return jsonify({"error": "No message provided"}), 400
-
     try:
-        # Enhanced system prompt for better formatting
-        system_prompt = """
-        You are ChatGenie, an enhanced AI assistant. Format your responses professionally and clearly:
-
-        1. Structure and Headers:
-           - Use ## for main sections
-           - Use ### for subsections
-           - Add line breaks between sections
-
-        2. Code Formatting:
-           - Use ```language for code blocks
-           - Use `backticks` for inline code
-           - Always specify the language for code blocks
-           - Include helpful code comments
-
-        3. Lists and Points:
-           - Use numbered lists (1., 2., etc.) for sequential steps
-           - Use bullet points (-) for unordered lists
-           - Maintain consistent indentation
-
-        4. Emphasis:
-           - Use **bold** for important concepts
-           - Use *italics* for emphasis
-           - Use > for important notes or quotes
-
-        5. Technical Content:
-           - Use $ for inline math equations
-           - Use $$ for display math equations
-           - Format tables using proper markdown
-           - Include links when referencing external content
-
-        6. Remember:
-           - Keep explanations clear and concise
-           - Use examples when helpful
-           - Break down complex concepts
-           - End with a clear conclusion or next steps
-        """
+        data = request.json
+        print("Received request with data:", data)  # Debug log
         
+        if not data:
+            return jsonify({"error": "No data provided", "status": "error"}), 400
+        
+        question = data.get('message')
+        timestamp = data.get('timestamp', '2025-02-24 08:38:51')  # Updated default timestamp
+        username = data.get('username', 'GM9125')
+        is_regenerate = data.get('regenerate', False)
+        
+        if not question:
+            return jsonify({"error": "No message provided", "status": "error"}), 400
+
+        print(f"Processing request - Question: {question}, Time: {timestamp}, User: {username}")  # Debug log
+
+        # Enhanced system prompt
+        system_prompt = f"""
+You are ChatGenie, an enhanced AI assistant. Format your responses professionally and clearly:
+
+1. Structure and Headers:
+   - Use ## for main sections
+   - Use ### for subsections
+   - Add line breaks between sections
+
+2. Code and Diagram Formatting:
+   - Use ```language for code blocks
+   - Use ```plantuml for PlantUML diagrams
+   - Use ```mermaid for Mermaid.js diagrams
+   - Always begin PlantUML with @startuml and end with @enduml
+   - Always specify the language for code blocks
+   - Include helpful code comments
+
+3. Lists and Points:
+   - Use numbered lists (1., 2., etc.) for sequential steps
+   - Use bullet points (-) for unordered lists
+   - Maintain consistent indentation
+
+4. Emphasis and Formatting:
+   - Use **bold** for important concepts
+   - Use *italics* for emphasis
+   - Use > for important notes or quotes
+   - Use --- for horizontal rules between sections
+
+5. Technical Content:
+   - Use $ for inline math equations
+   - Use $$ for display math equations
+   - Format tables using proper markdown alignment
+   - Include links when referencing external content
+   - Use proper syntax for all diagrams
+
+6. Response Structure:
+   - Start with a brief overview
+   - Provide detailed explanations
+   - Include relevant examples
+   - End with a clear conclusion
+   - Add next steps or related topics when appropriate
+
+Current Time: {timestamp}
+Current User: {username}
+"""
+        if is_regenerate:
+            system_prompt += "\nNote: This is a regenerated response. Providing an alternative perspective."
+
         # Send the message to the model
-        response = chat.send_message(f"{system_prompt}\n\nUser: {question}")
-        
+        try:
+            response = chat.send_message(f"{system_prompt}\n\nUser: {question}")
+            print("Got response from model, length:", len(response.text))  # Debug log
+        except Exception as model_error:
+            print("Model error:", str(model_error))  # Debug log
+            raise Exception(f"Model error: {str(model_error)}")
+
         # Format the response
         formatted_response = format_response(response.text)
-        
-        # Add timestamp to response
-        timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
+        print("Formatted response length:", len(formatted_response))  # Debug log
         
         return jsonify({
             "response": formatted_response,
             "timestamp": timestamp,
             "status": "success"
         })
+
     except Exception as e:
+        print("Error in chat_endpoint:", str(e))  # Debug log
+        error_message = f"Server error: {str(e)}"
         return jsonify({
-            "error": str(e),
+            "error": error_message,
+            "timestamp": timestamp if 'timestamp' in locals() else '2025-02-24 08:38:51',
             "status": "error"
         }), 500
 
 if __name__ == '__main__':
-    app.run(port=5000)
+    # Enable CORS properly
+    CORS(app, resources={
+        r"/chat": {
+            "origins": ["http://localhost:5173"],  # Your frontend URL
+            "methods": ["POST"],
+            "allow_headers": ["Content-Type", "Authorization"]
+        }
+    })
+    app.run(port=5000, debug=True)
