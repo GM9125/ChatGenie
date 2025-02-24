@@ -22,6 +22,14 @@ import {
 } from 'react-icons/ri';
 import 'katex/dist/katex.min.css';
 import 'highlight.js/styles/github-dark.css';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import {
+  oneDark,
+  oneLight,
+  dracula,
+  vscDarkPlus
+} from 'react-syntax-highlighter/dist/esm/styles/prism';
+
 
 const formatDateTime = () => {
   const now = new Date();
@@ -59,16 +67,61 @@ const cleanCodeContent = (content) => {
         return '';
       })
       .join('')
-      .replace(/^(```\w*\n|\n```$)/g, '')
+      .replace(/^\n+|\n+$/g, '') // Remove leading/trailing newlines
+      .replace(/\n\s*\n/g, '\n') // Remove multiple blank lines
+      .replace(/^\d+[:.]\s*/gm, '') // Remove line numbers with dots or colons
+      .replace(/^(```\w*\s*\n|\n```)/g, '') // Remove markdown code block syntax
       .trim();
   }
-  return String(content).replace(/^(```\w*\n|\n```$)/g, '').trim();
+  return String(content)
+    .replace(/^\n+|\n+$/g, '')
+    .replace(/\n\s*\n/g, '\n')
+    .replace(/^\d+[:.]\s*/gm, '')
+    .replace(/^(```\w*\s*\n|\n```)/g, '')
+    .trim();
 };
 
 const getLanguageName = (className) => {
   if (!className) return '';
   const match = className.match(/language-(\w+)/);
-  return match ? match[1] : '';
+  if (!match) return '';
+  
+  const languageMap = {
+    'cpp': 'cpp',
+    'c++': 'cpp',
+    'js': 'javascript',
+    'javascript': 'javascript',
+    'py': 'python',
+    'python': 'python',
+    'ts': 'typescript',
+    'typescript': 'typescript',
+    'jsx': 'jsx',
+    'tsx': 'tsx',
+    'html': 'html',
+    'css': 'css',
+    'java': 'java',
+    'cs': 'csharp',
+    'csharp': 'csharp',
+    'rb': 'ruby',
+    'ruby': 'ruby',
+    'go': 'go',
+    'golang': 'go',
+    'rs': 'rust',
+    'rust': 'rust',
+    'php': 'php',
+    'sh': 'bash',
+    'bash': 'bash',
+    'shell': 'bash',
+    'sql': 'sql',
+    'json': 'json',
+    'yml': 'yaml',
+    'yaml': 'yaml',
+    'md': 'markdown',
+    'markdown': 'markdown'
+  };
+  
+  const lang = match[1].toLowerCase();
+  return languageMap[lang] || lang;
 };
 
 const formatLanguageName = (lang) => {
@@ -124,93 +177,98 @@ const AnimatedIcon = () => (
 );
 
 const CopyButton = ({ text }) => {
+  const [isCopied, setIsCopied] = useState(false);
+
   const handleCopy = async () => {
     try {
-      let cleanText = '';
-  
+      let cleanText = "";
+
       if (Array.isArray(text)) {
         cleanText = text
-          .map(child => (typeof child === 'string' ? child : child?.props?.children || ''))
+          .map((child) =>
+            typeof child === "string" ? child : child?.props?.children || ""
+          )
           .flat()
-          .join('');
+          .join("");
       } else {
         cleanText = text;
       }
-  
+
       cleanText = cleanText
-        .replace(/\u200B/g, '') // Remove zero-width spaces
-        .replace(/\u00A0/g, ' ') // Replace non-breaking spaces with regular spaces
+        .replace(/\u200B/g, "") // Remove zero-width spaces
+        .replace(/\u00A0/g, " ") // Replace non-breaking spaces with regular spaces
         .trim();
-  
+
       await navigator.clipboard.writeText(cleanText);
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
     } catch (err) {
-      console.error('Failed to copy:', err);
+      console.error("Failed to copy:", err);
     }
   };
-  
+
   return (
-    <button onClick={handleCopy} className="btn-copy">
-      <span
-        data-text-end="Copied!"
-        data-text-initial="Copy to clipboard"
-        className="cp-tooltip"
-      ></span>
-      <span>
+    <button
+      onClick={handleCopy}
+      className="code-copy-button"
+      title={isCopied ? "Copied!" : "Copy to clipboard"}
+    >
+      {isCopied ? (
         <svg
-          xmlSpace="preserve"
-          style={{ enableBackground: 'new 0 0 512 512' }}
-          viewBox="0 0 6.35 6.35"
-          y="0"
-          x="0"
-          height="20"
-          width="20"
-          xmlns="http://www.w3.org/2000/svg"
-          className="cp-clipboard"
-        >
-          <g>
-            <path
-              fill="currentColor"
-              d="M2.43.265c-.3 0-.548.236-.573.53h-.328a.74.74 0 0 0-.735.734v3.822a.74.74 0 0 0 .735.734H4.82a.74.74 0 0 0 .735-.734V1.529a.74.74 0 0 0-.735-.735h-.328a.58.58 0 0 0-.573-.53zm0 .529h1.49c.032 0 .049.017.049.049v.431c0 .032-.017.049-.049.049H2.43c-.032 0-.05-.017-.05-.049V.843c0-.032.018-.05.05-.05zm-.901.53h.328c.026.292.274.528.573.528h1.49a.58.58 0 0 0 .573-.529h.328a.2.2 0 0 1 .206.206v3.822a.2.2 0 0 1-.206.205H1.53a.2.2 0 0 1-.206-.205V1.529a.2.2 0 0 1 .206-.206z"
-            ></path>
-          </g>
-        </svg>
-        <svg
-          xmlSpace="preserve"
-          style={{ enableBackground: 'new 0 0 512 512' }}
-          viewBox="0 0 24 24"
-          y="0"
-          x="0"
-          height="18"
-          width="18"
-          xmlns="http://www.w3.org/2000/svg"
           className="cp-check-mark"
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         >
-          <g>
-            <path
-              data-original="#000000"
-              fill="currentColor"
-              d="M9.707 19.121a.997.997 0 0 1-1.414 0l-5.646-5.647a1.5 1.5 0 0 1 0-2.121l.707-.707a1.5 1.5 0 0 1 2.121 0L9 14.171l9.525-9.525a1.5 1.5 0 0 1 2.121 0l.707.707a1.5 1.5 0 0 1 0 2.121z"
-            ></path>
-          </g>
+          <polyline points="20 6 9 17 4 12" />
         </svg>
-      </span>
+      ) : (
+        <svg
+          className="cp-clipboard"
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+          <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+        </svg>
+      )}
     </button>
   );
 };
-const UserInfo = ({ username, currentDateTime }) => (
-  <div className="user-info">
-    <div className="user-detail">
-      <RiUser3Line />
-      <span>{username}</span>
+
+const UserInfo = ({ username, currentDateTime }) => {
+  // Add local state to sync with updates
+  const [localDateTime, setLocalDateTime] = useState(currentDateTime);
+
+  useEffect(() => {
+    setLocalDateTime(currentDateTime);
+  }, [currentDateTime]);
+
+  return (
+    <div className="user-info">
+      <div className="user-detail">
+        <RiUser3Line />
+        <span>{username}</span>
+      </div>
+      <div className="datetime-detail">
+        <RiTimeLine />
+        <span className="datetime">
+          {localDateTime}
+        </span>
+      </div>
     </div>
-    <div className="datetime-detail">
-      <RiTimeLine />
-      <span className="datetime">
-        {currentDateTime}
-      </span>
-    </div>
-  </div>
-);
+  );
+};
+
 const MessageBubble = ({ message, onRegenerateResponse }) => {
   const [isCodeLoaded, setIsCodeLoaded] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
@@ -265,7 +323,7 @@ const MessageBubble = ({ message, onRegenerateResponse }) => {
                   code: ({inline, className, children, ...props}) => {
                     const filteredProps = {...props};
                     delete filteredProps.node;
-
+                  
                     if (inline) {
                       return (
                         <code className="md-inline-code selectable" {...filteredProps}>
@@ -273,11 +331,20 @@ const MessageBubble = ({ message, onRegenerateResponse }) => {
                         </code>
                       );
                     }
-
+                  
                     const languageId = getLanguageName(className);
                     const displayLanguage = formatLanguageName(languageId);
+                    
+                    // Make sure to properly clean the code content
                     const cleanedCode = cleanCodeContent(children);
-
+                    
+                    // Check if first line contains language name and remove it if needed
+                    let codeToRender = cleanedCode;
+                    const firstLineMatch = cleanedCode.match(/^.*\n/);
+                    if (firstLineMatch && firstLineMatch[0].includes(languageId)) {
+                      codeToRender = cleanedCode.substring(firstLineMatch[0].length);
+                    }
+                  
                     return (
                       <div className="code-block-wrapper">
                         <div className="code-block-header">
@@ -286,19 +353,30 @@ const MessageBubble = ({ message, onRegenerateResponse }) => {
                           </span>
                           <CopyButton text={cleanedCode} />
                         </div>
-                        <pre className="md-pre selectable">
-                          <code
-                            className={`md-code-block selectable ${
-                              isCodeLoaded ? 'loaded' : ''
-                            } ${className || ''}`}
-                            {...filteredProps}
+                        <div className="code-block-content">
+                          <SyntaxHighlighter
+                            language={languageId || "text"}
+                            style={vscDarkPlus}
+                            customStyle={{
+                              margin: 0,
+                              padding: "1em",
+                              background: "transparent",
+                              fontSize: "var(--code-font-size)",
+                              fontFamily: "'Fira Code', monospace",
+                              lineHeight: "var(--code-line-height)",
+                              minWidth: "100%",
+                              boxSizing: "border-box",
+                            }}
+                            wrapLongLines={true}
+                            showLineNumbers={false}
                           >
-                            {cleanedCode}
-                          </code>
-                        </pre>
+                            {codeToRender}
+                          </SyntaxHighlighter>
+                        </div>
                       </div>
-                  );
-                },
+                    );
+                  },
+
                 p: ({children, ...props}) => {
                   const filteredProps = {...props};
                   delete filteredProps.node;
@@ -514,7 +592,7 @@ export default function Chat() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [currentDateTime] = useState('2025-02-23 16:49:14');
+  const [currentDateTime, setCurrentDateTime] = useState(formatDateTime());
   const [username] = useState('GM9125');
   
   const messagesEndRef = useRef(null);
@@ -533,6 +611,16 @@ export default function Chat() {
   useEffect(() => {
     localStorage.setItem('currentChatId', currentChatId);
   }, [currentChatId]);
+
+  useEffect(() => {
+    // Update time every second
+    const timer = setInterval(() => {
+      setCurrentDateTime(formatDateTime());
+    }, 1000);
+  
+    // Cleanup on unmount
+    return () => clearInterval(timer);
+  }, []);
 
   const generateChatTitle = (messages) => {
     if (messages.length === 0) return 'ChatGenie';
@@ -634,7 +722,7 @@ export default function Chat() {
       id: Date.now(),
       text: userMessage,
       isUser: true,
-      timestamp: currentDateTime
+      timestamp: formatDateTime(),
     };
   
     setChats(prev => prev.map(chat => 
@@ -661,7 +749,7 @@ export default function Chat() {
         },
         body: JSON.stringify({ 
           message: userMessage,
-          timestamp: currentDateTime,
+          timestamp: formatDateTime(),
           username: username
         }),
         signal: controller.signal
@@ -684,7 +772,7 @@ export default function Chat() {
           id: Date.now(),
           text: data.response.trim(),
           isUser: false,
-          timestamp: currentDateTime
+          timestamp: formatDateTime(),
         };
   
         setChats(prev => prev.map(chat =>
@@ -712,7 +800,7 @@ export default function Chat() {
         text: `⚠️ ${errorMessage}`,
         isUser: false,
         isError: true,
-        timestamp: currentDateTime
+        timestamp: formatDateTime(),
       };
   
       setChats(prev => prev.map(chat =>
@@ -754,7 +842,7 @@ export default function Chat() {
         },
         body: JSON.stringify({ 
           message: userMessage.text, // Send the original user message
-          timestamp: currentDateTime,
+          timestamp: formatDateTime(),
           username: username,
           regenerate: true
         }),
@@ -778,7 +866,7 @@ export default function Chat() {
           id: Date.now(),
           text: data.response.trim(),
           isUser: false,
-          timestamp: currentDateTime
+          timestamp: formatDateTime(),
         };
   
         setChats(prev => prev.map(chat =>

@@ -326,7 +326,7 @@ def chat_endpoint():
             return jsonify({"error": "No data provided", "status": "error"}), 400
         
         question = data.get('message')
-        timestamp = data.get('timestamp', '2025-02-24 08:38:51')  # Updated default timestamp
+        timestamp = data.get('timestamp') or datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         username = data.get('username', 'GM9125')
         is_regenerate = data.get('regenerate', False)
         
@@ -344,13 +344,12 @@ You are ChatGenie, an enhanced AI assistant. Format your responses professionall
    - Use ### for subsections
    - Add line breaks between sections
 
-2. Code and Diagram Formatting:
-   - Use ```language for code blocks
-   - Use ```plantuml for PlantUML diagrams
-   - Use ```mermaid for Mermaid.js diagrams
-   - Always begin PlantUML with @startuml and end with @enduml
-   - Always specify the language for code blocks
+2  Code and Diagram Formatting:
+   - Use ```language for code blocks (e.g., ```python, ```cpp, ```javascript)
+   - Do not include language name in the code content
+   - Do not include line numbers in the code
    - Include helpful code comments
+   - Use proper indentation
 
 3. Lists and Points:
    - Use numbered lists (1., 2., etc.) for sequential steps
@@ -377,8 +376,64 @@ You are ChatGenie, an enhanced AI assistant. Format your responses professionall
    - End with a clear conclusion
    - Add next steps or related topics when appropriate
 
+7. Code Block Comments:
+   - Add descriptive comments
+   - Explain complex logic
+   - Use consistent commenting style
+   - Include usage examples when needed
+
+8. Markdown Formatting:
+   - Use appropriate heading levels
+   - Maintain consistent spacing
+   - Use horizontal rules for major sections
+   - Format inline code with backticks
+   - Use blockquotes for important notes
+   
+9. Table Formatting:
+   a. Standard Tables:
+      ```markdown
+      | Header 1 | Header 2 | Header 3 |
+      |----------|----------|----------|
+      | Data 1   | Data 2   | Data 3   |
+      ```
+
+   b. Alignment in Tables:
+      ```markdown
+      | Left     | Center   | Right    |
+      |:---------|:--------:|----------:|
+      | Left     | Center   | Right    |
+      ```
+
+   c. Comparison Tables:
+      ```markdown
+      | Feature    | Option A  | Option B  |
+      |:-----------|:---------:|:---------:|
+      | Item 1     | Value A   | Value B   |
+      ```
+
+   d. Table Best Practices:
+      - Always include headers
+      - Left-align text content
+      - Center-align headers and status
+      - Right-align numbers
+      - Add descriptive captions when needed
+      - Keep consistent column widths
+      - Use proper spacing
+
+   
 Current Time: {timestamp}
 Current User: {username}
+
+Note: All responses should be well-structured, clear, and professionally formatted using the guidelines above. Use appropriate spacing and formatting for better readability. When providing code examples, ensure they are properly commented and follow best practices for the respective language.
+
+For tables and comparisons:
+- Use clear headers
+- Maintain proper alignment
+- Include descriptive captions
+- Follow proper markdown table syntax
+- Add row/column separators
+- Use consistent spacing
+
 """
         if is_regenerate:
             system_prompt += "\nNote: This is a regenerated response. Providing an alternative perspective."
