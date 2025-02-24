@@ -178,27 +178,13 @@ const AnimatedIcon = () => (
 
 const CopyButton = ({ text }) => {
   const [isCopied, setIsCopied] = useState(false);
-
-  const handleCopy = async () => {
+  
+  const handleCopy = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
     try {
-      let cleanText = "";
-
-      if (Array.isArray(text)) {
-        cleanText = text
-          .map((child) =>
-            typeof child === "string" ? child : child?.props?.children || ""
-          )
-          .flat()
-          .join("");
-      } else {
-        cleanText = text;
-      }
-
-      cleanText = cleanText
-        .replace(/\u200B/g, "") // Remove zero-width spaces
-        .replace(/\u00A0/g, " ") // Replace non-breaking spaces with regular spaces
-        .trim();
-
+      const cleanText = cleanCodeContent(text);
       await navigator.clipboard.writeText(cleanText);
       setIsCopied(true);
       setTimeout(() => setIsCopied(false), 2000);
@@ -210,12 +196,12 @@ const CopyButton = ({ text }) => {
   return (
     <button
       onClick={handleCopy}
-      className="code-copy-button"
+      className={`code-copy-button ${isCopied ? 'copied' : ''}`}
       title={isCopied ? "Copied!" : "Copy to clipboard"}
+      aria-label={isCopied ? "Copied" : "Copy code"}
     >
       {isCopied ? (
         <svg
-          className="cp-check-mark"
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 24 24"
           fill="none"
@@ -227,19 +213,7 @@ const CopyButton = ({ text }) => {
           <polyline points="20 6 9 17 4 12" />
         </svg>
       ) : (
-        <svg
-          className="cp-clipboard"
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
-          <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
-        </svg>
+        <RiFileCopyLine />
       )}
     </button>
   );
@@ -280,11 +254,13 @@ const MessageBubble = ({ message, onRegenerateResponse }) => {
   }, []);
 
   const handleMessageClick = (e) => {
-    if (e.target.closest('.btn-copy') || e.target.closest('.message-actions')) return;
+    if (e.target.closest('.code-copy-button') || e.target.closest('.message-actions')) return;
     e.stopPropagation();
   };
 
-  const handleCopyResponse = async () => {
+  const handleCopyResponse = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
     try {
       await navigator.clipboard.writeText(message.text);
       setIsCopied(true);
@@ -323,7 +299,7 @@ const MessageBubble = ({ message, onRegenerateResponse }) => {
                   code: ({inline, className, children, ...props}) => {
                     const filteredProps = {...props};
                     delete filteredProps.node;
-                  
+                    
                     if (inline) {
                       return (
                         <code className="md-inline-code selectable" {...filteredProps}>
@@ -331,27 +307,18 @@ const MessageBubble = ({ message, onRegenerateResponse }) => {
                         </code>
                       );
                     }
-                  
+                    
                     const languageId = getLanguageName(className);
                     const displayLanguage = formatLanguageName(languageId);
-                    
-                    // Make sure to properly clean the code content
-                    const cleanedCode = cleanCodeContent(children);
-                    
-                    // Check if first line contains language name and remove it if needed
-                    let codeToRender = cleanedCode;
-                    const firstLineMatch = cleanedCode.match(/^.*\n/);
-                    if (firstLineMatch && firstLineMatch[0].includes(languageId)) {
-                      codeToRender = cleanedCode.substring(firstLineMatch[0].length);
-                    }
-                  
+                    const codeContent = cleanCodeContent(children);
+
                     return (
                       <div className="code-block-wrapper">
                         <div className="code-block-header">
                           <span className="code-language unselectable">
                             {displayLanguage}
                           </span>
-                          <CopyButton text={cleanedCode} />
+                          <CopyButton text={codeContent} />
                         </div>
                         <div className="code-block-content">
                           <SyntaxHighlighter
@@ -370,197 +337,196 @@ const MessageBubble = ({ message, onRegenerateResponse }) => {
                             wrapLongLines={true}
                             showLineNumbers={false}
                           >
-                            {codeToRender}
+                            {codeContent}
                           </SyntaxHighlighter>
                         </div>
                       </div>
                     );
                   },
-
-                p: ({children, ...props}) => {
-                  const filteredProps = {...props};
-                  delete filteredProps.node;
-                  return (
-                    <p className="md-p selectable" {...filteredProps}>{children}</p>
-                  );
-                },
-                h1: ({children, ...props}) => {
-                  const filteredProps = {...props};
-                  delete filteredProps.node;
-                  return (
-                    <h1 className="md-h1 selectable" {...filteredProps}>{children}</h1>
-                  );
-                },
-                h2: ({children, ...props}) => {
-                  const filteredProps = {...props};
-                  delete filteredProps.node;
-                  return (
-                    <h2 className="md-h2 selectable" {...filteredProps}>{children}</h2>
-                  );
-                },
-                h3: ({children, ...props}) => {
-                  const filteredProps = {...props};
-                  delete filteredProps.node;
-                  return (
-                    <h3 className="md-h3 selectable" {...filteredProps}>{children}</h3>
-                  );
-                },
-                ul: ({children, ...props}) => {
-                  const filteredProps = {...props};
-                  delete filteredProps.ordered;
-                  delete filteredProps.node;
-                  return (
-                    <ul className="md-ul selectable" {...filteredProps}>
-                      {children}
-                    </ul>
-                  );
-                },
-                ol: ({children, ...props}) => {
-                  const filteredProps = {...props};
-                  delete filteredProps.ordered;
-                  delete filteredProps.node;
-                  return (
-                    <ol className="md-ol selectable" {...filteredProps}>
-                      {children}
-                    </ol>
-                  );
-                },
-                li: ({children, ...props}) => {
-                  const filteredProps = {...props};
-                  delete filteredProps.ordered;
-                  delete filteredProps.node;
-                  return (
-                    <li className="md-li selectable" {...filteredProps}>
-                      {children}
-                    </li>
-                  );
-                },
-                blockquote: ({children, ...props}) => {
-                  const filteredProps = {...props};
-                  delete filteredProps.node;
-                  return (
-                    <blockquote className="md-blockquote selectable" {...filteredProps}>
-                      {children}
-                    </blockquote>
-                  );
-                },
-                table: ({children, ...props}) => {
-                  const filteredProps = {...props};
-                  delete filteredProps.node;
-                  return (
-                    <div className="table-container selectable">
-                      <table className="md-table" {...filteredProps}>{children}</table>
-                    </div>
-                  );
-                },
-                th: ({children, ...props}) => {
-                  const filteredProps = {...props};
-                  delete filteredProps.node;
-                  return (
-                    <th className="md-th selectable" {...filteredProps}>{children}</th>
-                  );
-                },
-                td: ({children, ...props}) => {
-                  const filteredProps = {...props};
-                  delete filteredProps.node;
-                  return (
-                    <td className="md-td selectable" {...filteredProps}>{children}</td>
-                  );
-                },
-                a: ({children, ...props}) => {
-                  const filteredProps = {...props};
-                  delete filteredProps.node;
-                  return (
-                    <a
-                      className="md-link"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      {...filteredProps}
+                  p: ({children, ...props}) => {
+                    const filteredProps = {...props};
+                    delete filteredProps.node;
+                    return (
+                      <p className="md-p selectable" {...filteredProps}>{children}</p>
+                    );
+                  },
+                  h1: ({children, ...props}) => {
+                    const filteredProps = {...props};
+                    delete filteredProps.node;
+                    return (
+                      <h1 className="md-h1 selectable" {...filteredProps}>{children}</h1>
+                    );
+                  },
+                  h2: ({children, ...props}) => {
+                    const filteredProps = {...props};
+                    delete filteredProps.node;
+                    return (
+                      <h2 className="md-h2 selectable" {...filteredProps}>{children}</h2>
+                    );
+                  },
+                  h3: ({children, ...props}) => {
+                    const filteredProps = {...props};
+                    delete filteredProps.node;
+                    return (
+                      <h3 className="md-h3 selectable" {...filteredProps}>{children}</h3>
+                    );
+                  },
+                  ul: ({children, ...props}) => {
+                    const filteredProps = {...props};
+                    delete filteredProps.ordered;
+                    delete filteredProps.node;
+                    return (
+                      <ul className="md-ul selectable" {...filteredProps}>
+                        {children}
+                      </ul>
+                    );
+                  },
+                  ol: ({children, ...props}) => {
+                    const filteredProps = {...props};
+                    delete filteredProps.ordered;
+                    delete filteredProps.node;
+                    return (
+                      <ol className="md-ol selectable" {...filteredProps}>
+                        {children}
+                      </ol>
+                    );
+                  },
+                  li: ({children, ...props}) => {
+                    const filteredProps = {...props};
+                    delete filteredProps.ordered;
+                    delete filteredProps.node;
+                    return (
+                      <li className="md-li selectable" {...filteredProps}>
+                        {children}
+                      </li>
+                    );
+                  },
+                  blockquote: ({children, ...props}) => {
+                    const filteredProps = {...props};
+                    delete filteredProps.node;
+                    return (
+                      <blockquote className="md-blockquote selectable" {...filteredProps}>
+                        {children}
+                      </blockquote>
+                    );
+                  },
+                  table: ({children, ...props}) => {
+                    const filteredProps = {...props};
+                    delete filteredProps.node;
+                    return (
+                      <div className="table-container selectable">
+                        <table className="md-table" {...filteredProps}>{children}</table>
+                      </div>
+                    );
+                  },
+                  th: ({children, ...props}) => {
+                    const filteredProps = {...props};
+                    delete filteredProps.node;
+                    return (
+                      <th className="md-th selectable" {...filteredProps}>{children}</th>
+                    );
+                  },
+                  td: ({children, ...props}) => {
+                    const filteredProps = {...props};
+                    delete filteredProps.node;
+                    return (
+                      <td className="md-td selectable" {...filteredProps}>{children}</td>
+                    );
+                  },
+                  a: ({children, ...props}) => {
+                    const filteredProps = {...props};
+                    delete filteredProps.node;
+                    return (
+                      <a
+                        className="md-link"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        {...filteredProps}
+                      >
+                        {children}
+                      </a>
+                    );
+                  },
+                  img: ({...props}) => {
+                    const filteredProps = {...props};
+                    delete filteredProps.node;
+                    return (
+                      <img
+                        className="md-img"
+                        alt={props.alt || ''}
+                        loading="lazy"
+                        {...filteredProps}
+                      />
+                    );
+                  },
+                  em: ({children, ...props}) => {
+                    const filteredProps = {...props};
+                    delete filteredProps.node;
+                    return (
+                      <em className="md-em selectable" {...filteredProps}>{children}</em>
+                    );
+                  },
+                  strong: ({children, ...props}) => {
+                    const filteredProps = {...props};
+                    delete filteredProps.node;
+                    return (
+                      <strong className="md-strong selectable" {...filteredProps}>
+                        {children}
+                      </strong>
+                    );
+                  },
+                  del: ({children, ...props}) => {
+                    const filteredProps = {...props};
+                    delete filteredProps.node;
+                    return (
+                      <del className="md-del selectable" {...filteredProps}>{children}</del>
+                    );
+                  }
+                }}
+              >
+                {message.text}
+              </ReactMarkdown>
+              
+              {!message.isUser && (
+                <div className="message-actions">
+                  <div className="action-group">
+                    <button
+                      className={`action-button ${isLiked ? 'active' : ''}`}
+                      onClick={handleLike}
+                      title="Like response"
                     >
-                      {children}
-                    </a>
-                  );
-                },
-                img: ({...props}) => {
-                  const filteredProps = {...props};
-                  delete filteredProps.node;
-                  return (
-                    <img
-                      className="md-img"
-                      alt={props.alt || ''}
-                      loading="lazy"
-                      {...filteredProps}
-                    />
-                  );
-                },
-                em: ({children, ...props}) => {
-                  const filteredProps = {...props};
-                  delete filteredProps.node;
-                  return (
-                    <em className="md-em selectable" {...filteredProps}>{children}</em>
-                  );
-                },
-                strong: ({children, ...props}) => {
-                  const filteredProps = {...props};
-                  delete filteredProps.node;
-                  return (
-                    <strong className="md-strong selectable" {...filteredProps}>
-                      {children}
-                    </strong>
-                  );
-                },
-                del: ({children, ...props}) => {
-                  const filteredProps = {...props};
-                  delete filteredProps.node;
-                  return (
-                    <del className="md-del selectable" {...filteredProps}>{children}</del>
-                  );
-                }
-              }}
-            >
-              {message.text}
-            </ReactMarkdown>
-            
-            {!message.isUser && (
-              <div className="message-actions">
-                <div className="action-group">
-                  <button
-                    className={`action-button ${isLiked ? 'active' : ''}`}
-                    onClick={handleLike}
-                    title="Like response"
-                  >
-                    {isLiked ? <RiThumbUpFill /> : <RiThumbUpLine />}
-                  </button>
-                  <button
-                    className={`action-button ${isDisliked ? 'active' : ''}`}
-                    onClick={handleDislike}
-                    title="Dislike response"
-                  >
-                    {isDisliked ? <RiThumbDownFill /> : <RiThumbDownLine />}
-                  </button>
-                </div>
+                      {isLiked ? <RiThumbUpFill /> : <RiThumbUpLine />}
+                    </button>
+                    <button
+                      className={`action-button ${isDisliked ? 'active' : ''}`}
+                      onClick={handleDislike}
+                      title="Dislike response"
+                    >
+                      {isDisliked ? <RiThumbDownFill /> : <RiThumbDownLine />}
+                    </button>
+                  </div>
 
-                <div className="action-separator" />
-                
-                <div className="action-group">
-                  <button
-                    className="action-button"
-                    onClick={() => onRegenerateResponse(message.id)}
-                    title="Regenerate response"
-                  >
-                    <RiRefreshLine />
-                  </button>
-                  <button
-                    className={`action-button ${isCopied ? 'copied' : ''}`}
-                    onClick={handleCopyResponse}
-                    title="Copy response"
-                  >
-                    <RiFileCopyLine />
-                  </button>
+                  <div className="action-separator" />
+                  
+                  <div className="action-group">
+                    <button
+                      className="action-button"
+                      onClick={() => onRegenerateResponse(message.id)}
+                      title="Regenerate response"
+                    >
+                      <RiRefreshLine />
+                    </button>
+                    <button
+                      className={`action-button ${isCopied ? 'copied' : ''}`}
+                      onClick={handleCopyResponse}
+                      title={isCopied ? "Copied!" : "Copy response"}
+                    >
+                      <RiFileCopyLine />
+                    </button>
+                  </div>
                 </div>
-              </div>
-            )}
-          </>
+              )}
+            </>
           )}
         </div>
       </div>
