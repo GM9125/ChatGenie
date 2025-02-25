@@ -309,6 +309,20 @@ def format_response(text):
     # Format table separators
     text = re.sub(r'\n\|([\-:]+\|)+\n', lambda m: '\n' + m.group(0).replace(' ', '') + '\n', text)
     
+    # Enhanced table formatting - Fixed regex pattern
+    text = re.sub(
+        r'(\n\|.*\|)\n(\|.*\|)\n(\|.*\|(\n|$))',
+        lambda m: f"{m.group(1)}\n{m.group(2).replace(' ', '')}\n{m.group(3)}",
+        text
+    )
+
+    # Ensure at least 3 dashes in separator
+    text = re.sub(
+        r'(\|-+)\|(\s*)\n',
+        lambda m: f"|{'|'.join(['---' for _ in m.group(1).split('|') if _])}|\n",
+        text
+    )
+    
     # Ensure proper list indentation
     text = re.sub(r'^\s*[-*+]\s', '- ', text, flags=re.MULTILINE)
     text = re.sub(r'^\s*\d+\.\s', lambda m: f"{m.group().rstrip()} ", text, flags=re.MULTILINE)
@@ -316,7 +330,6 @@ def format_response(text):
     return text
 
 @app.route('/chat', methods=['POST'])
-
 def chat_endpoint():
     try:
         data = request.json
@@ -389,38 +402,16 @@ You are ChatGenie, an enhanced AI assistant. Format your responses professionall
    - Format inline code with backticks
    - Use blockquotes for important notes
    
-9. Table Formatting:
-   a. Standard Tables:
-      ```markdown
-      | Header 1 | Header 2 | Header 3 |
-      |----------|----------|----------|
-      | Data 1   | Data 2   | Data 3   |
-      ```
+9. Strict Table Formatting:
+   - Always include header separator line with exactly 3 dashes
+   - Maintain consistent column alignment
+   - Example:
+     ```markdown
+     | Feature    | Option A  | Option B  |
+     |------------|-----------|-----------|
+     | Item 1     | Value A   | Value B   |
+     ```
 
-   b. Alignment in Tables:
-      ```markdown
-      | Left     | Center   | Right    |
-      |:---------|:--------:|----------:|
-      | Left     | Center   | Right    |
-      ```
-
-   c. Comparison Tables:
-      ```markdown
-      | Feature    | Option A  | Option B  |
-      |:-----------|:---------:|:---------:|
-      | Item 1     | Value A   | Value B   |
-      ```
-
-   d. Table Best Practices:
-      - Always include headers
-      - Left-align text content
-      - Center-align headers and status
-      - Right-align numbers
-      - Add descriptive captions when needed
-      - Keep consistent column widths
-      - Use proper spacing
-
-   
 Current Time: {timestamp}
 Current User: {username}
 
@@ -433,7 +424,6 @@ For tables and comparisons:
 - Follow proper markdown table syntax
 - Add row/column separators
 - Use consistent spacing
-
 """
         if is_regenerate:
             system_prompt += "\nNote: This is a regenerated response. Providing an alternative perspective."
@@ -461,7 +451,7 @@ For tables and comparisons:
         error_message = f"Server error: {str(e)}"
         return jsonify({
             "error": error_message,
-            "timestamp": timestamp if 'timestamp' in locals() else '2025-02-24 08:38:51',
+            "timestamp": timestamp if 'timestamp' in locals() else datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
             "status": "error"
         }), 500
 

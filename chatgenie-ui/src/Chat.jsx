@@ -415,22 +415,44 @@ const MessageBubble = ({ message, onRegenerateResponse }) => {
                     delete filteredProps.node;
                     return (
                       <div className="table-container selectable">
-                        <table className="md-table" {...filteredProps}>{children}</table>
+                        <table className="md-table" {...filteredProps}>
+                          {children}
+                        </table>
                       </div>
                     );
+                  },
+                  thead: ({children, ...props}) => {
+                    const filteredProps = {...props};
+                    delete filteredProps.node;
+                    return <thead {...filteredProps}>{children}</thead>;
+                  },
+                  tbody: ({children, ...props}) => {
+                    const filteredProps = {...props};
+                    delete filteredProps.node;
+                    return <tbody {...filteredProps}>{children}</tbody>;
                   },
                   th: ({children, ...props}) => {
                     const filteredProps = {...props};
                     delete filteredProps.node;
                     return (
-                      <th className="md-th selectable" {...filteredProps}>{children}</th>
+                      <th 
+                        className="md-th selectable" 
+                        {...filteredProps}
+                      >
+                        {children}
+                      </th>
                     );
                   },
                   td: ({children, ...props}) => {
                     const filteredProps = {...props};
                     delete filteredProps.node;
                     return (
-                      <td className="md-td selectable" {...filteredProps}>{children}</td>
+                      <td 
+                        className="md-td selectable" 
+                        {...filteredProps}
+                      >
+                        {children}
+                      </td>
                     );
                   },
                   a: ({children, ...props}) => {

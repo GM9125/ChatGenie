@@ -542,141 +542,64 @@ code {
 }
 /* Comprehensive Table Styles */
 
-/* Base Table Container */
+/* Table Styles */
 .table-container {
-  width: 100%;
+  margin: 1.5rem 0;
   overflow-x: auto;
-  margin: var(--spacing-md) 0;
-  border-radius: var(--border-radius-sm);
-  background: rgba(0, 0, 0, 0.2);
-  border: 1px solid var(--border-color);
-  position: relative;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* Table Layout */
 .md-table {
   width: 100%;
   border-collapse: collapse;
+  border-spacing: 0;
   font-size: 0.95em;
-  line-height: 1.5;
-  color: #fff;
-  table-layout: auto;
   margin: 0;
+  color: rgba(255, 255, 255, 0.9);
 }
 
-/* Table Headers */
-.md-th {
+.md-table thead {
+  background: rgba(104, 109, 224, 0.2);
+}
+
+.md-table th {
   background: rgba(104, 109, 224, 0.2);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  font-size: 0.85em;
-  white-space: nowrap;
-  color: #8bb9fe;
-  position: sticky;
-  top: 0;
-  z-index: 2;
-  backdrop-filter: blur(4px);
-}
-
-/* Table Cells */
-.md-td,
-.md-th {
-  padding: var(--spacing-sm) var(--spacing-md);
+  padding: 1rem;
   text-align: left;
-  border: 1px solid var(--border-color);
-  transition: background-color 0.2s ease;
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-/* Table Cell Alignment */
-.md-td[align="center"],
-.md-th[align="center"] {
-  text-align: center;
+.md-table td {
+  padding: 0.75rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  line-height: 1.6;
 }
 
-.md-td[align="right"],
-.md-th[align="right"] {
-  text-align: right;
-}
-
-/* Comparison Tables */
-.md-table.comparison {
-  table-layout: fixed;
-}
-
-.md-table.comparison .md-th {
-  background: rgba(104, 109, 224, 0.2);
-  text-align: center;
-}
-
-.md-table.comparison .md-td {
-  text-align: center;
-}
-
-.md-table.comparison .md-td:first-child {
-  text-align: left;
-  background: rgba(255, 255, 255, 0.05);
-  font-weight: 500;
-}
-
-/* Feature Comparison Tables */
-.md-table.features {
-  table-layout: fixed;
-}
-
-.md-table.features .md-th:first-child {
-  width: 30%;
-}
-
-/* Data Tables */
-.md-table.data .md-td:not(:first-child) {
-  font-family: 'Fira Code', monospace;
-  font-size: 0.9em;
-}
-
-/* Zebra Striping */
-.md-table tbody tr:nth-child(even) {
+.md-table tr:nth-child(even) {
   background: rgba(255, 255, 255, 0.02);
 }
 
-/* Row Hover Effect */
-.md-table tbody tr:hover {
+.md-table tr:hover {
   background: rgba(255, 255, 255, 0.05);
 }
 
-.md-table tbody tr:hover .md-td {
-  border-color: rgba(255, 255, 255, 0.2);
-}
-
-/* Table Borders and Spacing */
-.md-table thead .md-th {
-  border-bottom: 2px solid var(--border-color);
-}
-
-.md-table tfoot .md-td {
-  border-top: 2px solid var(--border-color);
-}
-
-/* Table Captions */
-.table-caption {
-  font-size: 0.9em;
-  color: rgba(255, 255, 255, 0.7);
+/* Table Cell Alignment */
+.md-table td[align="center"],
+.md-table th[align="center"] {
   text-align: center;
-  padding: var(--spacing-xs) var(--spacing-sm);
-  border-bottom: 1px solid var(--border-color);
-  background: rgba(255, 255, 255, 0.05);
 }
 
-/* Table Notes */
-.table-note {
-  font-size: 0.85em;
-  color: rgba(255, 255, 255, 0.6);
-  font-style: italic;
-  margin-top: var(--spacing-xs);
-  padding: var(--spacing-xs) var(--spacing-sm);
+.md-table td[align="right"],
+.md-table th[align="right"] {
+  text-align: right;
 }
 
-/* Responsive Tables */
+/* Responsive Table */
 @media (max-width: 768px) {
   .table-container {
     margin: var(--spacing-sm) calc(-1 * var(--spacing-md));
@@ -688,169 +611,10 @@ code {
     font-size: 0.9em;
   }
 
-  .md-td,
-  .md-th {
-    padding: var(--spacing-xs) var(--spacing-sm);
+  .md-table th,
+  .md-table td {
+    padding: 0.75rem;
   }
-
-  /* Horizontal Scroll Indicator */
-  .table-scroll-hint {
-    position: absolute;
-    right: var(--spacing-sm);
-    top: 50%;
-    transform: translateY(-50%);
-    background: rgba(0, 0, 0, 0.8);
-    color: white;
-    padding: var(--spacing-xs) var(--spacing-sm);
-    border-radius: var(--border-radius-sm);
-    font-size: 0.8em;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.2s ease;
-  }
-
-  .table-container:hover .table-scroll-hint {
-    opacity: 1;
-  }
-}
-
-/* Status Indicators in Tables */
-.status-cell {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--spacing-xs);
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-size: 0.85em;
-  font-weight: 500;
-}
-
-.status-success {
-  background: rgba(72, 187, 120, 0.2);
-  color: #68d391;
-}
-
-.status-warning {
-  background: rgba(236, 201, 75, 0.2);
-  color: #f6e05e;
-}
-
-.status-error {
-  background: rgba(245, 101, 101, 0.2);
-  color: #fc8181;
-}
-
-/* Table Wrapper for Complex Tables */
-.table-wrapper {
-  position: relative;
-  margin: var(--spacing-md) 0;
-}
-
-/* Table Controls */
-.table-controls {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-xs) var(--spacing-sm);
-  background: rgba(255, 255, 255, 0.05);
-  border-bottom: 1px solid var(--border-color);
-}
-
-/* Table Search Input */
-.table-search {
-  padding: 4px 8px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius-sm);
-  color: white;
-  font-size: 0.9em;
-}
-
-/* Table Pagination */
-.table-pagination {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-xs);
-  padding: var(--spacing-xs) var(--spacing-sm);
-  background: rgba(255, 255, 255, 0.05);
-  border-top: 1px solid var(--border-color);
-}
-
-.table-pagination button {
-  padding: 4px 8px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius-sm);
-  color: white;
-  font-size: 0.9em;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.table-pagination button:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
-
-/* Table Loading State */
-.table-loading {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  backdrop-filter: blur(2px);
-}
-
-.table-loading-spinner {
-  width: 24px;
-  height: 24px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top-color: #fff;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* Selection Styles */
-.md-table thead th,
-.md-table tbody td {
-  user-select: text;
-  -webkit-user-select: text;
-  -moz-user-select: text;
-  -ms-user-select: text;
-}
-
-/* Focus Styles */
-.md-table:focus-within {
-  outline: none;
-  box-shadow: 0 0 0 2px var(--primary-color);
-}
-
-/* Empty State */
-.table-empty {
-  padding: var(--spacing-md);
-  text-align: center;
-  color: rgba(255, 255, 255, 0.6);
-  font-style: italic;
-}
-
-/* Table Footer */
-.table-footer {
-  padding: var(--spacing-xs) var(--spacing-sm);
-  background: rgba(255, 255, 255, 0.05);
-  border-top: 1px solid var(--border-color);
-  font-size: 0.9em;
-  color: rgba(255, 255, 255, 0.7);
 }
 /* Math Equations */
 .katex-display {
