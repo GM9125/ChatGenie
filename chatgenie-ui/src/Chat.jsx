@@ -582,12 +582,11 @@ export default function Chat() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [currentDateTime, setCurrentDateTime] = useState(formatDateTime());
   const [username] = useState('GM9125');
-  
+  const [showScrollButton, setShowScrollButton] = useState(false);
   const messagesEndRef = useRef(null);
   const textareaRef = useRef(null);
   const messagesAreaRef = useRef(null);
   const [isAtBottom, setIsAtBottom] = useState(true);
-
   const currentChat = chats.find(chat => chat.id === currentChatId) || chats[0];
 
   // Save chats to localStorage
@@ -622,6 +621,8 @@ export default function Chat() {
       const { scrollHeight, scrollTop, clientHeight } = messagesAreaRef.current;
       const bottom = Math.abs(scrollHeight - scrollTop - clientHeight) < 50;
       setIsAtBottom(bottom);
+      // Show scroll button when not at bottom
+      setShowScrollButton(!bottom);
     }, 100),
     []
   );
@@ -635,10 +636,11 @@ export default function Chat() {
   }, [handleScroll]);
 
   const scrollToBottom = useCallback(() => {
-    if (isAtBottom) {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+      setShowScrollButton(false);
     }
-  }, [isAtBottom]);
+  }, []);
 
   useEffect(() => {
     scrollToBottom();
@@ -988,7 +990,25 @@ export default function Chat() {
 
           <div ref={messagesEndRef} />
         </div>
-
+        {showScrollButton && (
+          <button
+            className="scroll-to-bottom-button"
+            onClick={scrollToBottom}
+            title="Scroll to Bottom"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M12 3v18M5 16l7 7 7-7" />
+            </svg>
+          </button>
+        )}
         {error && <div className="error-alert">{error}</div>}
 
         <div className="input-area">
