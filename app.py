@@ -6,19 +6,38 @@ from flask_cors import CORS
 import re
 from datetime import datetime
 
-# Load environment variables
+# Load environment variables first
 load_dotenv()
-
-# Configure the API with your key
 API_KEY = os.getenv('GEMINI_API_KEY')
+
+# Then define validation functions
+def validate_environment():
+    """Validate environment variables and configuration."""
+    if not os.getenv('GEMINI_API_KEY'):
+        raise ValueError("GEMINI_API_KEY environment variable is not set")
+
+def validate_model_response(response):
+    """Validate model response."""
+    if not response:
+        raise ValueError("Empty response from model")
+    if not response.text:
+        raise ValueError("Empty text in model response")
+    return True
+
+# Now validate environment
+validate_environment()
+
+# Configure the API
 genai.configure(api_key=API_KEY)
 
-# Initialize the model with specific configuration
+# Enhanced generation config for Gemini 2.0 Flash
 generation_config = {
-    "temperature": 0.7,
-    "top_p": 0.8,
-    "top_k": 40,
-    "max_output_tokens": 2048,
+    "temperature": 0.7,        # Creativity vs consistency
+    "top_p": 0.8,             # Nucleus sampling
+    "top_k": 40,              # Top-k sampling
+    "max_output_tokens": 2048, # Maximum response length
+    "candidate_count": 1,      # Number of response candidates
+    "stop_sequences": [],      # No special stop sequences
 }
 
 safety_settings = [
@@ -28,18 +47,33 @@ safety_settings = [
     {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
 ]
 
-model = genai.GenerativeModel(
-    model_name='gemini-1.0-pro',
-    generation_config=generation_config,
-    safety_settings=safety_settings
-)
+# Initialize model with Gemini 2.0 Flash
+try:
+    model = genai.GenerativeModel(
+        model_name='models/gemini-2.0-flash',
+        generation_config=generation_config,
+        safety_settings=safety_settings
+    )
 
-# Start a new chat session
-chat = model.start_chat(history=[])
+    chat_history = {}  # Store chat history by session ID
+    # Start a new chat session
+    chat = model.start_chat(history=[])
+    print("Successfully initialized Gemini 2.0 Flash model")
+    
+except Exception as e:
+    print(f"Error initializing Gemini: {str(e)}")
+    raise
 
-# Create Flask app
+# Create Flask app with enhanced CORS
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={
+    r"/chat": {
+        "origins": ["http://localhost:5173"],
+        "methods": ["POST", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"],
+        "expose_headers": ["Content-Type"]
+    }
+})
 
 def infer_language(code_line):
     """Infer the programming language from code snippet."""
@@ -170,6 +204,13 @@ def infer_language(code_line):
             r'^class\s+\w+\s*<\s*\w+',
             r'=>',
         ],
+        'math': [
+            r'^[P\u03C1\u03B7][\s+]?[+=/*-]',  # Basic math operations with P, ρ, η
+            r'^[P\u03C1\u03B7][\d+]',          # Variables with subscripts
+            r'[\u03C1\u03B7].*[=+\-*/^]',      # Greek letters in equations
+            r'\([0-9.]+\s*[*/+-]\s*[0-9.]+\)', # Basic arithmetic
+            r'^.*\s*=\s*.*$',                   # Equations with equals sign
+        ],
         'sql': [
             r'^SELECT\s+',
             r'^INSERT\s+INTO',
@@ -213,14 +254,23 @@ def infer_language(code_line):
     }
 
     code_line = code_line.strip()
+    
+    # First check if it's a mathematical equation
+    for pattern in language_patterns['math']:
+        if re.match(pattern, code_line, re.IGNORECASE):
+            return 'math'
+    
+    # Then check other languages
     for lang, patterns in language_patterns.items():
-        for pattern in patterns:
-            if re.match(pattern, code_line, re.IGNORECASE):
-                return lang
+        if lang != 'math':  # Skip math patterns as we already checked them
+            for pattern in patterns:
+                if re.match(pattern, code_line, re.IGNORECASE):
+                    return lang
 
-    # If no specific language is detected, analyze content
-    if re.search(r'[{}()]', code_line):
-        return 'javascript'  # Default to JavaScript for code-like content
+    # If no specific language is detected, but contains equation-like content
+    if re.search(r'[=+\-*/^(){}[\]]', code_line):
+        return 'math'  # Default to math for equation-like content
+        
     return 'plaintext'
 
 def format_code_blocks(text):
@@ -235,14 +285,18 @@ def format_code_blocks(text):
             if in_code_block:
                 # End of code block
                 if current_block:
-                    # Special handling for diagrams
+                    # Special handling for diagrams and math
                     if '@startuml' in current_block[0]:
                         formatted_lines.append('```plantuml')
                     elif 'graph' in current_block[0] or 'sequenceDiagram' in current_block[0]:
                         formatted_lines.append('```mermaid')
                     else:
                         lang = infer_language(current_block[0])
-                        formatted_lines.append(f'```{lang}')
+                        if lang == 'math':
+                            # Format math blocks specially
+                            formatted_lines.append('```math')
+                        else:
+                            formatted_lines.append(f'```{lang}')
                     formatted_lines.extend(current_block)
                 formatted_lines.append('```')
                 current_block = []
@@ -257,6 +311,8 @@ def format_code_blocks(text):
                         formatted_lines.append('```plantuml')
                     elif existing_lang in ['mermaid']:
                         formatted_lines.append('```mermaid')
+                    elif existing_lang in ['math', 'equation']:
+                        formatted_lines.append('```math')
                     elif existing_lang:
                         formatted_lines.append(f'```{existing_lang}')
                     else:
@@ -276,11 +332,15 @@ def format_code_blocks(text):
             formatted_lines.append('```mermaid')
         else:
             lang = infer_language(current_block[0])
-            formatted_lines.append(f'```{lang}')
+            if lang == 'math':
+                formatted_lines.append('```math')
+            else:
+                formatted_lines.append(f'```{lang}')
         formatted_lines.extend(current_block)
         formatted_lines.append('```')
     
     return '\n'.join(formatted_lines)
+
 
 def format_response(text):
     """Format the response with enhanced styling and structure."""
@@ -333,135 +393,148 @@ def format_response(text):
 def chat_endpoint():
     try:
         data = request.json
-        print("Received request with data:", data)  # Debug log
+        print(f"\nReceived request at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        print(f"Request data: {data}")
         
+        # Validate request data
         if not data:
             return jsonify({"error": "No data provided", "status": "error"}), 400
         
+        # Extract request data
         question = data.get('message')
         timestamp = data.get('timestamp') or datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         username = data.get('username', 'GM9125')
         is_regenerate = data.get('regenerate', False)
+        session_id = data.get('sessionId', str(datetime.now().timestamp()))
         
         if not question:
             return jsonify({"error": "No message provided", "status": "error"}), 400
 
-        print(f"Processing request - Question: {question}, Time: {timestamp}, User: {username}")  # Debug log
-
-        # Enhanced system prompt
-        system_prompt = f"""
-You are ChatGenie, an enhanced AI assistant. Format your responses professionally and clearly:
-
-1. Structure and Headers:
-   - Use ## for main sections
-   - Use ### for subsections
-   - Add line breaks between sections
-
-2  Code and Diagram Formatting:
-   - Use ```language for code blocks (e.g., ```python, ```cpp, ```javascript)
-   - Do not include language name in the code content
-   - Do not include line numbers in the code
-   - Include helpful code comments
-   - Use proper indentation
-
-3. Lists and Points:
-   - Use numbered lists (1., 2., etc.) for sequential steps
-   - Use bullet points (-) for unordered lists
-   - Maintain consistent indentation
-
-4. Emphasis and Formatting:
-   - Use **bold** for important concepts
-   - Use *italics* for emphasis
-   - Use > for important notes or quotes
-   - Use --- for horizontal rules between sections
-
-5. Technical Content:
-   - Use $ for inline math equations
-   - Use $$ for display math equations
-   - Format tables using proper markdown alignment
-   - Include links when referencing external content
-   - Use proper syntax for all diagrams
-
-6. Response Structure:
-   - Start with a brief overview
-   - Provide detailed explanations
-   - Include relevant examples
-   - End with a clear conclusion
-   - Add next steps or related topics when appropriate
-
-7. Code Block Comments:
-   - Add descriptive comments
-   - Explain complex logic
-   - Use consistent commenting style
-   - Include usage examples when needed
-
-8. Markdown Formatting:
-   - Use appropriate heading levels
-   - Maintain consistent spacing
-   - Use horizontal rules for major sections
-   - Format inline code with backticks
-   - Use blockquotes for important notes
-   
-9. Strict Table Formatting:
-   - Always include header separator line with exactly 3 dashes
-   - Maintain consistent column alignment
-   - Example:
-     ```markdown
-     | Feature    | Option A  | Option B  |
-     |------------|-----------|-----------|
-     | Item 1     | Value A   | Value B   |
-     ```
-
+        try:
+            # Get or create chat session
+            if session_id not in chat_history:
+                chat_history[session_id] = {
+                    'messages': [],
+                    'chat_instance': model.start_chat(history=[])
+                }
+            
+            current_session = chat_history[session_id]
+            
+            # Add user message to history
+            current_session['messages'].append({
+                'role': 'user',
+                'content': question,
+                'timestamp': timestamp
+            })
+            
+            # Prepare context with chat history
+            context = f"""
 Current Time: {timestamp}
 Current User: {username}
+Chat History:
+{chr(10).join([f"{msg['role']}: {msg['content']}" for msg in current_session['messages'][-5:]])}
 
-Note: All responses should be well-structured, clear, and professionally formatted using the guidelines above. Use appropriate spacing and formatting for better readability. When providing code examples, ensure they are properly commented and follow best practices for the respective language.
+Instructions: You are ChatGenie, an enhanced AI assistant developed by Ghulam Mustafa using Gemini 2.0 Flash model.
+Question: {question}
 
-For tables and comparisons:
-- Use clear headers
-- Maintain proper alignment
-- Include descriptive captions
-- Follow proper markdown table syntax
-- Add row/column separators
-- Use consistent spacing
+Response Guidelines:
+1. Structure:
+   - Use ## for main sections
+   - Use ### for subsections
+   - Single line breaks between sections
+   - No horizontal rules
+
+2. Formatting:
+   - **Bold** for important terms
+   - *Italic* for emphasis
+   - `code` for technical terms
+   - > for important notes
+
+3. Code Blocks:
+   - Use ```language
+   - Include comments
+   - Proper indentation
+
+4. Lists and Tables:
+   - Numbered lists for steps
+   - Bullet points for items
+   - Clear table headers
+   - 3-dash separators
 """
-        if is_regenerate:
-            system_prompt += "\nNote: This is a regenerated response. Providing an alternative perspective."
-
-        # Send the message to the model
-        try:
-            response = chat.send_message(f"{system_prompt}\n\nUser: {question}")
-            print("Got response from model, length:", len(response.text))  # Debug log
+            
+            # Generate response
+            response = current_session['chat_instance'].send_message(
+                context,
+                stream=False
+            )
+            
+            # Validate and format response
+            validate_model_response(response)
+            formatted_response = format_response(response.text)
+            
+            # Add bot response to history
+            current_session['messages'].append({
+                'role': 'assistant',
+                'content': formatted_response,
+                'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            })
+            
+            # Trim history if too long
+            if len(current_session['messages']) > 50:
+                current_session['messages'] = current_session['messages'][-50:]
+            
+            print(f"Generated response length: {len(formatted_response)}")
+            
+            return jsonify({
+                "response": formatted_response,
+                "timestamp": timestamp,
+                "status": "success",
+                "sessionId": session_id
+            })
+            
         except Exception as model_error:
-            print("Model error:", str(model_error))  # Debug log
-            raise Exception(f"Model error: {str(model_error)}")
-
-        # Format the response
-        formatted_response = format_response(response.text)
-        print("Formatted response length:", len(formatted_response))  # Debug log
-        
-        return jsonify({
-            "response": formatted_response,
-            "timestamp": timestamp,
-            "status": "success"
-        })
+            print(f"Model error: {str(model_error)}")
+            error_details = str(model_error)
+            if "quota" in error_details.lower():
+                error_message = "API quota exceeded"
+            elif "invalid" in error_details.lower():
+                error_message = "Invalid API key"
+            else:
+                error_message = f"Model error: {error_details}"
+            
+            return jsonify({
+                "error": error_message,
+                "status": "error"
+            }), 500
 
     except Exception as e:
-        print("Error in chat_endpoint:", str(e))  # Debug log
-        error_message = f"Server error: {str(e)}"
+        print(f"Server error: {str(e)}")
         return jsonify({
-            "error": error_message,
-            "timestamp": timestamp if 'timestamp' in locals() else datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            "error": f"Server error: {str(e)}",
             "status": "error"
         }), 500
 
+# Add error handler
+@app.errorhandler(Exception)
+def handle_error(error):
+    print(f"Unhandled error: {str(error)}")
+    response = {
+        "error": "Internal server error",
+        "details": str(error),
+        "status": "error"
+    }
+    return jsonify(response), 500
+
+
 if __name__ == '__main__':
-    # Enable CORS properly
-    CORS(app, resources={
-        r"/chat": {
-            "origins": ["http://localhost:5173"],  # Your frontend URL
-            "methods": ["POST"],
-            "allow_headers": ["Content-Type", "Authorization"]
-        }
-    })
-    app.run(port=5000, debug=True)
+    try:
+        print(f"Starting server with Gemini 2.0 Flash model...")
+        print(f"Server time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        print(f"Debug mode: enabled")
+        print(f"Server port: 5000")
+        print(f"CORS enabled for: http://localhost:5173")
+        app.run(port=5000, debug=True)
+        
+    except Exception as e:
+        print(f"Failed to start server: {str(e)}")
+        exit(1)

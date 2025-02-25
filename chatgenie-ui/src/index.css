@@ -620,8 +620,8 @@ code {
 
 .scroll-to-bottom-button {
   position: fixed;
-  bottom: 100px; /* Adjust based on your input area height */
-  right: 29px;
+  bottom: 120.5px; /* Adjust based on your input area height */
+  right: 32px;
   width: 40px;
   height: 40px;
   border-radius: 50%;
