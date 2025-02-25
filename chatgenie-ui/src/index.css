@@ -387,8 +387,14 @@ code {
   background: rgba(255, 255, 255, 0.05);
   color: #fff;
   box-shadow: var(--shadow-sm);
-  transition: height 0.1s ease;
+  
+  /* Performance optimizations */
+  transition: none !important;
+  will-change: height;
   overflow-y: hidden;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 .message-input:focus {
@@ -400,6 +406,7 @@ code {
 
 .message-input::placeholder {
   color: rgba(255, 255, 255, 0.5);
+  transition: none;
 }
 
 .send-button {

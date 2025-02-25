@@ -5,6 +5,7 @@ import remarkMath from 'remark-math';
 import remarkGfm from 'remark-gfm';
 import rehypeKatex from 'rehype-katex';
 import rehypeHighlight from 'rehype-highlight';
+import { debounce } from 'lodash';
 import { 
   RiDeleteBin6Line, 
   RiChat1Line, 
@@ -559,44 +560,65 @@ const MessageBubble = ({ message, onRegenerateResponse }) => {
 export default function Chat() {
   // Load chats and current chat ID from localStorage
   const [chats, setChats] = useState(() => {
-    const saved = localStorage.getItem('chats');
-    return saved ? JSON.parse(saved) : [{ 
-      id: 'default',
-      title: 'ChatGenie',
-      messages: []
-    }];
+    const saved = localStorage.getItem("chats");
+    return saved
+      ? JSON.parse(saved)
+      : [
+          {
+            id: "default",
+            title: "ChatGenie",
+            messages: [],
+          },
+        ];
   });
-  
+
   // Initialize currentChatId with persisted value
   const [currentChatId, setCurrentChatId] = useState(() => {
-    const savedCurrentChatId = localStorage.getItem('currentChatId');
-    if (savedCurrentChatId && chats.some(chat => chat.id === savedCurrentChatId)) {
+    const savedCurrentChatId = localStorage.getItem("currentChatId");
+    if (
+      savedCurrentChatId &&
+      chats.some((chat) => chat.id === savedCurrentChatId)
+    ) {
       return savedCurrentChatId;
     }
     return chats[chats.length - 1].id;
   });
 
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [currentDateTime, setCurrentDateTime] = useState(formatDateTime());
-  const [username] = useState('GM9125');
+  const [username] = useState("GM9125");
   const [showScrollButton, setShowScrollButton] = useState(false);
   const messagesEndRef = useRef(null);
   const textareaRef = useRef(null);
   const messagesAreaRef = useRef(null);
   const [isAtBottom, setIsAtBottom] = useState(true);
-  const currentChat = chats.find(chat => chat.id === currentChatId) || chats[0];
+  const currentChat =
+    chats.find((chat) => chat.id === currentChatId) || chats[0];
+
+  const debouncedResize = useCallback(
+      debounce((element) => {
+        if (element) {
+          element.style.height = 'auto';
+          const newHeight = Math.min(element.scrollHeight, 200);
+          if (element.style.height !== `${newHeight}px`) {
+            element.style.height = `${newHeight}px`;
+          }
+        }
+      }, 16),
+      []
+    );
 
   // Save chats to localStorage
   useEffect(() => {
-    localStorage.setItem('chats', JSON.stringify(chats));
+    localStorage.setItem("chats", JSON.stringify(chats));
   }, [chats]);
 
   // Save currentChatId to localStorage
   useEffect(() => {
-    localStorage.setItem('currentChatId', currentChatId);
+    localStorage.setItem("currentChatId", currentChatId);
   }, [currentChatId]);
 
   useEffect(() => {
@@ -604,15 +626,18 @@ export default function Chat() {
     const timer = setInterval(() => {
       setCurrentDateTime(formatDateTime());
     }, 1000);
-  
+
     // Cleanup on unmount
     return () => clearInterval(timer);
   }, []);
 
   const generateChatTitle = (messages) => {
-    if (messages.length === 0) return 'ChatGenie';
-    const firstUserMessage = messages.find(m => m.isUser)?.text || '';
-    return firstUserMessage.slice(0, 30) + (firstUserMessage.length > 30 ? '...' : '');
+    if (messages.length === 0) return "ChatGenie";
+    const firstUserMessage = messages.find((m) => m.isUser)?.text || "";
+    return (
+      firstUserMessage.slice(0, 30) +
+      (firstUserMessage.length > 30 ? "..." : "")
+    );
   };
 
   const handleScroll = useCallback(
@@ -630,14 +655,29 @@ export default function Chat() {
   useEffect(() => {
     const messagesArea = messagesAreaRef.current;
     if (messagesArea) {
-      messagesArea.addEventListener('scroll', handleScroll);
-      return () => messagesArea.removeEventListener('scroll', handleScroll);
+      messagesArea.addEventListener("scroll", handleScroll);
+      return () => messagesArea.removeEventListener("scroll", handleScroll);
     }
   }, [handleScroll]);
 
+  const handleInputChange = useCallback((e) => {
+    setInput(e.target.value);
+    
+    // Use queueMicrotask instead of requestAnimationFrame for better performance
+    queueMicrotask(() => {
+      if (textareaRef.current) {
+        textareaRef.current.style.height = 'auto';
+        const newHeight = Math.min(textareaRef.current.scrollHeight, 200);
+        if (textareaRef.current.style.height !== `${newHeight}px`) {
+          textareaRef.current.style.height = `${newHeight}px`;
+        }
+      }
+    });
+  }, []);
+
   const scrollToBottom = useCallback(() => {
     if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
       setShowScrollButton(false);
     }
   }, []);
@@ -646,23 +686,16 @@ export default function Chat() {
     scrollToBottom();
   }, [currentChat.messages, scrollToBottom]);
 
-  useEffect(() => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 200)}px`;
-    }
-  }, [input]);
-
   const handleNewChat = () => {
     const newChat = {
       id: Date.now().toString(),
-      title: 'New Chat',
-      messages: []
+      title: "New Chat",
+      messages: [],
     };
-    setChats(prev => [...prev, newChat]);
+    setChats((prev) => [...prev, newChat]);
     setCurrentChatId(newChat.id);
-    setInput('');
-    localStorage.setItem('currentChatId', newChat.id);
+    setInput("");
+    localStorage.setItem("currentChatId", newChat.id);
     if (window.innerWidth < 768) {
       setIsSidebarOpen(false);
     }
@@ -672,13 +705,13 @@ export default function Chat() {
     if (chats.length === 1) {
       handleNewChat();
     } else {
-      setChats(prev => {
-        const filteredChats = prev.filter(chat => chat.id !== chatId);
+      setChats((prev) => {
+        const filteredChats = prev.filter((chat) => chat.id !== chatId);
         if (currentChatId === chatId) {
-          const currentIndex = prev.findIndex(chat => chat.id === chatId);
+          const currentIndex = prev.findIndex((chat) => chat.id === chatId);
           const nextChatId = filteredChats[Math.max(0, currentIndex - 1)].id;
           setCurrentChatId(nextChatId);
-          localStorage.setItem('currentChatId', nextChatId);
+          localStorage.setItem("currentChatId", nextChatId);
         }
         return filteredChats;
       });
@@ -687,14 +720,14 @@ export default function Chat() {
 
   const handleSelectChat = (chatId) => {
     setCurrentChatId(chatId);
-    localStorage.setItem('currentChatId', chatId);
+    localStorage.setItem("currentChatId", chatId);
     if (window.innerWidth < 768) {
       setIsSidebarOpen(false);
     }
   };
 
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSubmit(e);
     }
@@ -703,60 +736,67 @@ export default function Chat() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
-  
+
     const userMessage = input.trim();
-    setInput('');
+    setInput("");
     setError(null);
-  
+
     const newMessage = {
       id: Date.now(),
       text: userMessage,
       isUser: true,
       timestamp: formatDateTime(),
     };
-  
-    setChats(prev => prev.map(chat => 
-      chat.id === currentChatId
-        ? {
-            ...chat,
-            messages: [...chat.messages, newMessage],
-            title: chat.messages.length === 0 ? generateChatTitle([newMessage]) : chat.title
-          }
-        : chat
-    ));
-  
+
+    setChats((prev) =>
+      prev.map((chat) =>
+        chat.id === currentChatId
+          ? {
+              ...chat,
+              messages: [...chat.messages, newMessage],
+              title:
+                chat.messages.length === 0
+                  ? generateChatTitle([newMessage])
+                  : chat.title,
+            }
+          : chat
+      )
+    );
+
     setIsLoading(true);
-  
+
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 30000);
-  
-      const response = await fetch('http://localhost:5000/chat', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
+
+      const response = await fetch("http://localhost:5000/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
         },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           message: userMessage,
           timestamp: formatDateTime(),
-          username: username
+          username: username,
         }),
-        signal: controller.signal
+        signal: controller.signal,
       });
-  
+
       clearTimeout(timeoutId);
-  
+
       if (!response.ok) {
-        throw new Error(`Server Error: ${response.status} ${response.statusText}`);
+        throw new Error(
+          `Server Error: ${response.status} ${response.statusText}`
+        );
       }
-  
+
       const data = await response.json();
-      
-      if (data.status === 'error') {
+
+      if (data.status === "error") {
         throw new Error(data.error);
       }
-  
+
       if (data.response) {
         const botMessage = {
           id: Date.now(),
@@ -764,27 +804,29 @@ export default function Chat() {
           isUser: false,
           timestamp: formatDateTime(),
         };
-  
-        setChats(prev => prev.map(chat =>
-          chat.id === currentChatId
-            ? { ...chat, messages: [...chat.messages, botMessage] }
-            : chat
-        ));
+
+        setChats((prev) =>
+          prev.map((chat) =>
+            chat.id === currentChatId
+              ? { ...chat, messages: [...chat.messages, botMessage] }
+              : chat
+          )
+        );
       }
     } catch (error) {
-      console.error('Error:', error);
-      let errorMessage = 'Failed to send message: ';
-      
-      if (error.name === 'AbortError') {
-        errorMessage += 'Request timed out';
-      } else if (error.message.includes('NetworkError')) {
-        errorMessage += 'Network connection error';
+      console.error("Error:", error);
+      let errorMessage = "Failed to send message: ";
+
+      if (error.name === "AbortError") {
+        errorMessage += "Request timed out";
+      } else if (error.message.includes("NetworkError")) {
+        errorMessage += "Network connection error";
       } else {
         errorMessage += error.message;
       }
-      
+
       setError(errorMessage);
-      
+
       const errorBotMessage = {
         id: Date.now(),
         text: `⚠️ ${errorMessage}`,
@@ -792,12 +834,14 @@ export default function Chat() {
         isError: true,
         timestamp: formatDateTime(),
       };
-  
-      setChats(prev => prev.map(chat =>
-        chat.id === currentChatId
-          ? { ...chat, messages: [...chat.messages, errorBotMessage] }
-          : chat
-      ));
+
+      setChats((prev) =>
+        prev.map((chat) =>
+          chat.id === currentChatId
+            ? { ...chat, messages: [...chat.messages, errorBotMessage] }
+            : chat
+        )
+      );
     } finally {
       setIsLoading(false);
     }
@@ -805,52 +849,57 @@ export default function Chat() {
   const handleRegenerateResponse = async (messageId) => {
     // Find the original user message that generated this response
     const currentMessages = currentChat.messages;
-    const botMessageIndex = currentMessages.findIndex(m => m.id === messageId);
-    if (botMessageIndex === -1 || currentMessages[botMessageIndex].isUser) return;
-  
+    const botMessageIndex = currentMessages.findIndex(
+      (m) => m.id === messageId
+    );
+    if (botMessageIndex === -1 || currentMessages[botMessageIndex].isUser)
+      return;
+
     // Find the last user message before this bot message
     let userMessageIndex = botMessageIndex - 1;
     while (userMessageIndex >= 0 && !currentMessages[userMessageIndex].isUser) {
       userMessageIndex--;
     }
-  
+
     if (userMessageIndex < 0) return;
     const userMessage = currentMessages[userMessageIndex];
-  
+
     setIsLoading(true);
     setError(null);
-  
+
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 30000);
-  
-      const response = await fetch('http://localhost:5000/chat', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
+
+      const response = await fetch("http://localhost:5000/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
         },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           message: userMessage.text, // Send the original user message
           timestamp: formatDateTime(),
           username: username,
-          regenerate: true
+          regenerate: true,
         }),
-        signal: controller.signal
+        signal: controller.signal,
       });
-  
+
       clearTimeout(timeoutId);
-  
+
       if (!response.ok) {
-        throw new Error(`Server Error: ${response.status} ${response.statusText}`);
+        throw new Error(
+          `Server Error: ${response.status} ${response.statusText}`
+        );
       }
-  
+
       const data = await response.json();
-      
-      if (data.status === 'error') {
+
+      if (data.status === "error") {
         throw new Error(data.error);
       }
-  
+
       if (data.response) {
         const regeneratedMessage = {
           id: Date.now(),
@@ -858,30 +907,32 @@ export default function Chat() {
           isUser: false,
           timestamp: formatDateTime(),
         };
-  
-        setChats(prev => prev.map(chat =>
-          chat.id === currentChatId
-            ? {
-                ...chat,
-                messages: chat.messages.map(msg =>
-                  msg.id === messageId ? regeneratedMessage : msg
-                )
-              }
-            : chat
-        ));
+
+        setChats((prev) =>
+          prev.map((chat) =>
+            chat.id === currentChatId
+              ? {
+                  ...chat,
+                  messages: chat.messages.map((msg) =>
+                    msg.id === messageId ? regeneratedMessage : msg
+                  ),
+                }
+              : chat
+          )
+        );
       }
     } catch (error) {
-      console.error('Error:', error);
-      let errorMessage = 'Failed to regenerate response: ';
-      
-      if (error.name === 'AbortError') {
-        errorMessage += 'Request timed out';
-      } else if (error.message.includes('NetworkError')) {
-        errorMessage += 'Network connection error';
+      console.error("Error:", error);
+      let errorMessage = "Failed to regenerate response: ";
+
+      if (error.name === "AbortError") {
+        errorMessage += "Request timed out";
+      } else if (error.message.includes("NetworkError")) {
+        errorMessage += "Network connection error";
       } else {
         errorMessage += error.message;
       }
-      
+
       setError(errorMessage);
     } finally {
       setIsLoading(false);
@@ -1016,12 +1067,16 @@ export default function Chat() {
             <textarea
               ref={textareaRef}
               value={input}
-              onChange={(e) => setInput(e.target.value)}
+              onChange={handleInputChange}
               onKeyDown={handleKeyDown}
               placeholder="Message ChatGenie"
               className="message-input"
               disabled={isLoading}
               rows="1"
+              style={{
+                height: "auto",
+                minHeight: "56px",
+              }}
             />
             <button
               type="submit"
