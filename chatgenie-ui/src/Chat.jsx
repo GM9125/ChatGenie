@@ -1,16 +1,16 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
-import { throttle } from 'lodash';
-import ReactMarkdown from 'react-markdown';
-import remarkMath from 'remark-math';
-import remarkGfm from 'remark-gfm';
-import rehypeKatex from 'rehype-katex';
-import rehypeHighlight from 'rehype-highlight';
-import { debounce } from 'lodash';
-import { 
-  RiDeleteBin6Line, 
-  RiChat1Line, 
-  RiSendPlaneFill, 
-  RiHistoryLine, 
+import { useState, useRef, useEffect, useCallback } from "react";
+import { throttle } from "lodash";
+import ReactMarkdown from "react-markdown";
+import remarkMath from "remark-math";
+import remarkGfm from "remark-gfm";
+import rehypeKatex from "rehype-katex";
+import rehypeHighlight from "rehype-highlight";
+import { debounce } from "lodash";
+import {
+  RiDeleteBin6Line,
+  RiChat1Line,
+  RiSendPlaneFill,
+  RiHistoryLine,
   RiArrowRightSLine,
   RiTimeLine,
   RiUser3Line,
@@ -19,155 +19,161 @@ import {
   RiThumbUpLine,
   RiThumbDownLine,
   RiThumbUpFill,
-  RiThumbDownFill
-} from 'react-icons/ri';
-import 'katex/dist/katex.min.css';
-import 'highlight.js/styles/github-dark.css';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+  RiThumbDownFill,
+} from "react-icons/ri";
+import "katex/dist/katex.min.css";
+import "highlight.js/styles/github-dark.css";
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import {
   oneDark,
   oneLight,
   dracula,
-  vscDarkPlus
-} from 'react-syntax-highlighter/dist/esm/styles/prism';
+  vscDarkPlus,
+} from "react-syntax-highlighter/dist/esm/styles/prism";
 
-
+// Utility function to format current date and time
 const formatDateTime = () => {
   const now = new Date();
   const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-  const hours = String(now.getHours()).padStart(2, '0');
-  const minutes = String(now.getMinutes()).padStart(2, '0');
-  const seconds = String(now.getSeconds()).padStart(2, '0');
-  
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  const hours = String(now.getHours()).padStart(2, "0");
+  const minutes = String(now.getMinutes()).padStart(2, "0");
+  const seconds = String(now.getSeconds()).padStart(2, "0");
+
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 };
 
+// Constants for handling API request timeouts and retries
 const TYPING_TIMEOUT = 3000;
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000;
 
-// Add formatMessageTime utility function
+// Formats message timestamps in 24-hour format
 const formatMessageTime = (timestamp) => {
   const date = new Date(timestamp);
-  return date.toLocaleTimeString('en-US', {
+  return date.toLocaleTimeString("en-US", {
     hour12: false,
-    hour: '2-digit',
-    minute: '2-digit'
+    hour: "2-digit",
+    minute: "2-digit",
   });
 };
 
-// Utility functions for code handling
+// Cleans up code content by removing extra whitespace and formatting markers
 const cleanCodeContent = (content) => {
   if (Array.isArray(content)) {
     return content
-      .map(child => {
-        if (typeof child === 'string') return child;
-        if (child?.props?.children) return cleanCodeContent(child.props.children);
-        return '';
+      .map((child) => {
+        if (typeof child === "string") return child;
+        if (child?.props?.children)
+          return cleanCodeContent(child.props.children);
+        return "";
       })
-      .join('')
-      .replace(/^\n+|\n+$/g, '') // Remove leading/trailing newlines
-      .replace(/\n\s*\n/g, '\n') // Remove multiple blank lines
-      .replace(/^\d+[:.]\s*/gm, '') // Remove line numbers with dots or colons
-      .replace(/^(```\w*\s*\n|\n```)/g, '') // Remove markdown code block syntax
+      .join("")
+      .replace(/^\n+|\n+$/g, "")
+      .replace(/\n\s*\n/g, "\n")
+      .replace(/^\d+[:.]\s*/gm, "")
+      .replace(/^(```\w*\s*\n|\n```)/g, "")
       .trim();
   }
   return String(content)
-    .replace(/^\n+|\n+$/g, '')
-    .replace(/\n\s*\n/g, '\n')
-    .replace(/^\d+[:.]\s*/gm, '')
-    .replace(/^(```\w*\s*\n|\n```)/g, '')
+    .replace(/^\n+|\n+$/g, "")
+    .replace(/\n\s*\n/g, "\n")
+    .replace(/^\d+[:.]\s*/gm, "")
+    .replace(/^(```\w*\s*\n|\n```)/g, "")
     .trim();
 };
 
+// Maps code language identifiers to their standardized names
 const getLanguageName = (className) => {
-  if (!className) return '';
+  if (!className) return "";
   const match = className.match(/language-(\w+)/);
-  if (!match) return '';
-  
+  if (!match) return "";
+
   const languageMap = {
-    'cpp': 'cpp',
-    'c++': 'cpp',
-    'js': 'javascript',
-    'javascript': 'javascript',
-    'py': 'python',
-    'python': 'python',
-    'ts': 'typescript',
-    'typescript': 'typescript',
-    'jsx': 'jsx',
-    'tsx': 'tsx',
-    'html': 'html',
-    'css': 'css',
-    'java': 'java',
-    'cs': 'csharp',
-    'csharp': 'csharp',
-    'rb': 'ruby',
-    'ruby': 'ruby',
-    'go': 'go',
-    'golang': 'go',
-    'rs': 'rust',
-    'rust': 'rust',
-    'php': 'php',
-    'sh': 'bash',
-    'bash': 'bash',
-    'shell': 'bash',
-    'sql': 'sql',
-    'json': 'json',
-    'yml': 'yaml',
-    'yaml': 'yaml',
-    'md': 'markdown',
-    'markdown': 'markdown'
+    cpp: "cpp",
+    "c++": "cpp",
+    js: "javascript",
+    javascript: "javascript",
+    py: "python",
+    python: "python",
+    ts: "typescript",
+    typescript: "typescript",
+    jsx: "jsx",
+    tsx: "tsx",
+    html: "html",
+    css: "css",
+    java: "java",
+    cs: "csharp",
+    csharp: "csharp",
+    rb: "ruby",
+    ruby: "ruby",
+    go: "go",
+    golang: "go",
+    rs: "rust",
+    rust: "rust",
+    php: "php",
+    sh: "bash",
+    bash: "bash",
+    shell: "bash",
+    sql: "sql",
+    json: "json",
+    yml: "yaml",
+    yaml: "yaml",
+    md: "markdown",
+    markdown: "markdown",
   };
-  
+
   const lang = match[1].toLowerCase();
   return languageMap[lang] || lang;
 };
 
+// Converts language codes to human-readable names (e.g., 'js' -> 'JavaScript')
 const formatLanguageName = (lang) => {
-  if (!lang) return 'plaintext';
-  
+  if (!lang) return "plaintext";
+
   const languageNames = {
-    'js': 'JavaScript',
-    'jsx': 'React/JSX',
-    'ts': 'TypeScript',
-    'tsx': 'React/TSX',
-    'py': 'Python',
-    'html': 'HTML',
-    'css': 'CSS',
-    'scss': 'SCSS',
-    'sql': 'SQL',
-    'bash': 'Bash',
-    'shell': 'Shell',
-    'powershell': 'PowerShell',
-    'ps1': 'PowerShell',
-    'java': 'Java',
-    'cpp': 'C++',
-    'c': 'C',
-    'cs': 'C#',
-    'go': 'Go',
-    'rust': 'Rust',
-    'rb': 'Ruby',
-    'php': 'PHP',
-    'kt': 'Kotlin',
-    'swift': 'Swift',
-    'dart': 'Dart',
-    'json': 'JSON',
-    'yaml': 'YAML',
-    'xml': 'XML',
-    'markdown': 'Markdown',
-    'md': 'Markdown',
-    'dockerfile': 'Dockerfile',
-    'plaintext': 'Plain Text'
+    js: "JavaScript",
+    jsx: "React/JSX",
+    ts: "TypeScript",
+    tsx: "React/TSX",
+    py: "Python",
+    html: "HTML",
+    css: "CSS",
+    scss: "SCSS",
+    sql: "SQL",
+    bash: "Bash",
+    shell: "Shell",
+    powershell: "PowerShell",
+    ps1: "PowerShell",
+    java: "Java",
+    cpp: "C++",
+    c: "C",
+    cs: "C#",
+    go: "Go",
+    rust: "Rust",
+    rb: "Ruby",
+    php: "PHP",
+    kt: "Kotlin",
+    swift: "Swift",
+    dart: "Dart",
+    json: "JSON",
+    yaml: "YAML",
+    xml: "XML",
+    markdown: "Markdown",
+    md: "Markdown",
+    dockerfile: "Dockerfile",
+    plaintext: "Plain Text",
   };
 
   const normalizedLang = lang.toLowerCase();
-  return languageNames[normalizedLang] || lang.charAt(0).toUpperCase() + lang.slice(1);
+  return (
+    languageNames[normalizedLang] ||
+    lang.charAt(0).toUpperCase() + lang.slice(1)
+  );
 };
 
-
-// Animated Icon Component
+// Animated icon component shown in chat header
 const AnimatedIcon = () => (
   <div className="animated-icon-wrapper">
     <div className="animated-icon-3d">
@@ -177,13 +183,14 @@ const AnimatedIcon = () => (
   </div>
 );
 
+// Button component for copying code blocks with copy confirmation
 const CopyButton = ({ text }) => {
   const [isCopied, setIsCopied] = useState(false);
-  
+
   const handleCopy = async (e) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     try {
       const cleanText = cleanCodeContent(text);
       await navigator.clipboard.writeText(cleanText);
@@ -197,7 +204,7 @@ const CopyButton = ({ text }) => {
   return (
     <button
       onClick={handleCopy}
-      className={`code-copy-button ${isCopied ? 'copied' : ''}`}
+      className={`code-copy-button ${isCopied ? "copied" : ""}`}
       title={isCopied ? "Copied!" : "Copy to clipboard"}
       aria-label={isCopied ? "Copied" : "Copy code"}
     >
@@ -220,6 +227,7 @@ const CopyButton = ({ text }) => {
   );
 };
 
+// Displays user information and current date/time in sidebar
 const UserInfo = ({ username, currentDateTime }) => {
   // Add local state to sync with updates
   const [localDateTime, setLocalDateTime] = useState(currentDateTime);
@@ -236,14 +244,13 @@ const UserInfo = ({ username, currentDateTime }) => {
       </div>
       <div className="datetime-detail">
         <RiTimeLine />
-        <span className="datetime">
-          {localDateTime}
-        </span>
+        <span className="datetime">{localDateTime}</span>
       </div>
     </div>
   );
 };
 
+// Renders individual chat messages with formatting and action buttons
 const MessageBubble = ({ message, onRegenerateResponse }) => {
   const [isCodeLoaded, setIsCodeLoaded] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
@@ -255,7 +262,11 @@ const MessageBubble = ({ message, onRegenerateResponse }) => {
   }, []);
 
   const handleMessageClick = (e) => {
-    if (e.target.closest('.code-copy-button') || e.target.closest('.message-actions')) return;
+    if (
+      e.target.closest(".code-copy-button") ||
+      e.target.closest(".message-actions")
+    )
+      return;
     e.stopPropagation();
   };
 
@@ -267,7 +278,7 @@ const MessageBubble = ({ message, onRegenerateResponse }) => {
       setIsCopied(true);
       setTimeout(() => setIsCopied(false), 2000);
     } catch (err) {
-      console.error('Failed to copy response:', err);
+      console.error("Failed to copy response:", err);
     }
   };
 
@@ -282,12 +293,14 @@ const MessageBubble = ({ message, onRegenerateResponse }) => {
   };
 
   return (
-    <div 
-      className="message-container" 
+    <div
+      className="message-container"
       onClick={handleMessageClick}
       onMouseDown={(e) => e.stopPropagation()}
     >
-      <div className={`message ${message.isUser ? 'user-message' : 'bot-message'}`}>
+      <div
+        className={`message ${message.isUser ? "user-message" : "bot-message"}`}
+      >
         <div className="message-text">
           {message.isUser ? (
             <span className="selectable">{message.text}</span>
@@ -297,18 +310,21 @@ const MessageBubble = ({ message, onRegenerateResponse }) => {
                 remarkPlugins={[remarkMath, remarkGfm]}
                 rehypePlugins={[rehypeKatex, rehypeHighlight]}
                 components={{
-                  code: ({inline, className, children, ...props}) => {
-                    const filteredProps = {...props};
+                  code: ({ inline, className, children, ...props }) => {
+                    const filteredProps = { ...props };
                     delete filteredProps.node;
-                    
+
                     if (inline) {
                       return (
-                        <code className="md-inline-code selectable" {...filteredProps}>
+                        <code
+                          className="md-inline-code selectable"
+                          {...filteredProps}
+                        >
                           {cleanCodeContent(children)}
                         </code>
                       );
                     }
-                    
+
                     const languageId = getLanguageName(className);
                     const displayLanguage = formatLanguageName(languageId);
                     const codeContent = cleanCodeContent(children);
@@ -344,36 +360,44 @@ const MessageBubble = ({ message, onRegenerateResponse }) => {
                       </div>
                     );
                   },
-                  p: ({children, ...props}) => {
-                    const filteredProps = {...props};
+                  p: ({ children, ...props }) => {
+                    const filteredProps = { ...props };
                     delete filteredProps.node;
                     return (
-                      <p className="md-p selectable" {...filteredProps}>{children}</p>
+                      <p className="md-p selectable" {...filteredProps}>
+                        {children}
+                      </p>
                     );
                   },
-                  h1: ({children, ...props}) => {
-                    const filteredProps = {...props};
+                  h1: ({ children, ...props }) => {
+                    const filteredProps = { ...props };
                     delete filteredProps.node;
                     return (
-                      <h1 className="md-h1 selectable" {...filteredProps}>{children}</h1>
+                      <h1 className="md-h1 selectable" {...filteredProps}>
+                        {children}
+                      </h1>
                     );
                   },
-                  h2: ({children, ...props}) => {
-                    const filteredProps = {...props};
+                  h2: ({ children, ...props }) => {
+                    const filteredProps = { ...props };
                     delete filteredProps.node;
                     return (
-                      <h2 className="md-h2 selectable" {...filteredProps}>{children}</h2>
+                      <h2 className="md-h2 selectable" {...filteredProps}>
+                        {children}
+                      </h2>
                     );
                   },
-                  h3: ({children, ...props}) => {
-                    const filteredProps = {...props};
+                  h3: ({ children, ...props }) => {
+                    const filteredProps = { ...props };
                     delete filteredProps.node;
                     return (
-                      <h3 className="md-h3 selectable" {...filteredProps}>{children}</h3>
+                      <h3 className="md-h3 selectable" {...filteredProps}>
+                        {children}
+                      </h3>
                     );
                   },
-                  ul: ({children, ...props}) => {
-                    const filteredProps = {...props};
+                  ul: ({ children, ...props }) => {
+                    const filteredProps = { ...props };
                     delete filteredProps.ordered;
                     delete filteredProps.node;
                     return (
@@ -382,8 +406,8 @@ const MessageBubble = ({ message, onRegenerateResponse }) => {
                       </ul>
                     );
                   },
-                  ol: ({children, ...props}) => {
-                    const filteredProps = {...props};
+                  ol: ({ children, ...props }) => {
+                    const filteredProps = { ...props };
                     delete filteredProps.ordered;
                     delete filteredProps.node;
                     return (
@@ -392,8 +416,8 @@ const MessageBubble = ({ message, onRegenerateResponse }) => {
                       </ol>
                     );
                   },
-                  li: ({children, ...props}) => {
-                    const filteredProps = {...props};
+                  li: ({ children, ...props }) => {
+                    const filteredProps = { ...props };
                     delete filteredProps.ordered;
                     delete filteredProps.node;
                     return (
@@ -402,17 +426,20 @@ const MessageBubble = ({ message, onRegenerateResponse }) => {
                       </li>
                     );
                   },
-                  blockquote: ({children, ...props}) => {
-                    const filteredProps = {...props};
+                  blockquote: ({ children, ...props }) => {
+                    const filteredProps = { ...props };
                     delete filteredProps.node;
                     return (
-                      <blockquote className="md-blockquote selectable" {...filteredProps}>
+                      <blockquote
+                        className="md-blockquote selectable"
+                        {...filteredProps}
+                      >
                         {children}
                       </blockquote>
                     );
                   },
-                  table: ({children, ...props}) => {
-                    const filteredProps = {...props};
+                  table: ({ children, ...props }) => {
+                    const filteredProps = { ...props };
                     delete filteredProps.node;
                     return (
                       <div className="table-container selectable">
@@ -422,42 +449,36 @@ const MessageBubble = ({ message, onRegenerateResponse }) => {
                       </div>
                     );
                   },
-                  thead: ({children, ...props}) => {
-                    const filteredProps = {...props};
+                  thead: ({ children, ...props }) => {
+                    const filteredProps = { ...props };
                     delete filteredProps.node;
                     return <thead {...filteredProps}>{children}</thead>;
                   },
-                  tbody: ({children, ...props}) => {
-                    const filteredProps = {...props};
+                  tbody: ({ children, ...props }) => {
+                    const filteredProps = { ...props };
                     delete filteredProps.node;
                     return <tbody {...filteredProps}>{children}</tbody>;
                   },
-                  th: ({children, ...props}) => {
-                    const filteredProps = {...props};
+                  th: ({ children, ...props }) => {
+                    const filteredProps = { ...props };
                     delete filteredProps.node;
                     return (
-                      <th 
-                        className="md-th selectable" 
-                        {...filteredProps}
-                      >
+                      <th className="md-th selectable" {...filteredProps}>
                         {children}
                       </th>
                     );
                   },
-                  td: ({children, ...props}) => {
-                    const filteredProps = {...props};
+                  td: ({ children, ...props }) => {
+                    const filteredProps = { ...props };
                     delete filteredProps.node;
                     return (
-                      <td 
-                        className="md-td selectable" 
-                        {...filteredProps}
-                      >
+                      <td className="md-td selectable" {...filteredProps}>
                         {children}
                       </td>
                     );
                   },
-                  a: ({children, ...props}) => {
-                    const filteredProps = {...props};
+                  a: ({ children, ...props }) => {
+                    const filteredProps = { ...props };
                     delete filteredProps.node;
                     return (
                       <a
@@ -470,58 +491,65 @@ const MessageBubble = ({ message, onRegenerateResponse }) => {
                       </a>
                     );
                   },
-                  img: ({...props}) => {
-                    const filteredProps = {...props};
+                  img: ({ ...props }) => {
+                    const filteredProps = { ...props };
                     delete filteredProps.node;
                     return (
                       <img
                         className="md-img"
-                        alt={props.alt || ''}
+                        alt={props.alt || ""}
                         loading="lazy"
                         {...filteredProps}
                       />
                     );
                   },
-                  em: ({children, ...props}) => {
-                    const filteredProps = {...props};
+                  em: ({ children, ...props }) => {
+                    const filteredProps = { ...props };
                     delete filteredProps.node;
                     return (
-                      <em className="md-em selectable" {...filteredProps}>{children}</em>
+                      <em className="md-em selectable" {...filteredProps}>
+                        {children}
+                      </em>
                     );
                   },
-                  strong: ({children, ...props}) => {
-                    const filteredProps = {...props};
+                  strong: ({ children, ...props }) => {
+                    const filteredProps = { ...props };
                     delete filteredProps.node;
                     return (
-                      <strong className="md-strong selectable" {...filteredProps}>
+                      <strong
+                        className="md-strong selectable"
+                        {...filteredProps}
+                      >
                         {children}
                       </strong>
                     );
                   },
-                  del: ({children, ...props}) => {
-                    const filteredProps = {...props};
+                  del: ({ children, ...props }) => {
+                    const filteredProps = { ...props };
                     delete filteredProps.node;
                     return (
-                      <del className="md-del selectable" {...filteredProps}>{children}</del>
+                      <del className="md-del selectable" {...filteredProps}>
+                        {children}
+                      </del>
                     );
-                  }
+                  },
                 }}
               >
                 {message.text}
               </ReactMarkdown>
-              
+
               {!message.isUser && (
                 <div className="message-actions">
                   <div className="action-group">
                     <button
-                      className={`action-button ${isLiked ? 'active' : ''}`}
+                      className={`action-button ${isLiked ? "active" : ""}`}
                       onClick={handleLike}
                       title="Like response"
                     >
                       {isLiked ? <RiThumbUpFill /> : <RiThumbUpLine />}
                     </button>
                     <button
-                      className={`action-button ${isDisliked ? 'active' : ''}`}
+                      className={`action-button ${isDisliked ? "active" : ""}`}
                       onClick={handleDislike}
                       title="Dislike response"
                     >
@@ -530,7 +558,7 @@ const MessageBubble = ({ message, onRegenerateResponse }) => {
                   </div>
 
                   <div className="action-separator" />
-                  
+
                   <div className="action-group">
                     <button
                       className="action-button"
@@ -540,7 +568,7 @@ const MessageBubble = ({ message, onRegenerateResponse }) => {
                       <RiRefreshLine />
                     </button>
                     <button
-                      className={`action-button ${isCopied ? 'copied' : ''}`}
+                      className={`action-button ${isCopied ? "copied" : ""}`}
                       onClick={handleCopyResponse}
                       title={isCopied ? "Copied!" : "Copy response"}
                     >
@@ -557,8 +585,9 @@ const MessageBubble = ({ message, onRegenerateResponse }) => {
   );
 };
 
+// Main Chat component to handle chat messages and user interactions
 export default function Chat() {
-  // Load chats and current chat ID from localStorage
+  // Load saved chats from localStorage or create default chat
   const [chats, setChats] = useState(() => {
     const saved = localStorage.getItem("chats");
     return saved
@@ -572,7 +601,7 @@ export default function Chat() {
         ];
   });
 
-  // Initialize currentChatId with persisted value
+  // Track which chat is currently active
   const [currentChatId, setCurrentChatId] = useState(() => {
     const savedCurrentChatId = localStorage.getItem("currentChatId");
     if (
@@ -584,53 +613,56 @@ export default function Chat() {
     return chats[chats.length - 1].id;
   });
 
-  const [input, setInput] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [currentDateTime, setCurrentDateTime] = useState(formatDateTime());
-  const [username] = useState("GM9125");
-  const [showScrollButton, setShowScrollButton] = useState(false);
+  // State variables for managing chat functionality
+  const [input, setInput] = useState(""); // User input text
+  const [isLoading, setIsLoading] = useState(false); // Loading state for API requests
+  const [error, setError] = useState(null); // Error message storage
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Sidebar visibility
+  const [currentDateTime, setCurrentDateTime] = useState(formatDateTime()); // Current time
+  const [username] = useState("GM9125"); // User identification
+  const [showScrollButton, setShowScrollButton] = useState(false); // Scroll-to-bottom button visibility
+
+  // References for DOM elements
   const messagesEndRef = useRef(null);
   const textareaRef = useRef(null);
   const messagesAreaRef = useRef(null);
   const [isAtBottom, setIsAtBottom] = useState(true);
+
+  // Get current chat data based on chat ID
   const currentChat =
     chats.find((chat) => chat.id === currentChatId) || chats[0];
 
+  // Handles textarea auto-resize
   const debouncedResize = useCallback(
-      debounce((element) => {
-        if (element) {
-          element.style.height = 'auto';
-          const newHeight = Math.min(element.scrollHeight, 200);
-          if (element.style.height !== `${newHeight}px`) {
-            element.style.height = `${newHeight}px`;
-          }
+    debounce((element) => {
+      if (element) {
+        element.style.height = "auto";
+        const newHeight = Math.min(element.scrollHeight, 200);
+        if (element.style.height !== `${newHeight}px`) {
+          element.style.height = `${newHeight}px`;
         }
-      }, 16),
-      []
-    );
+      }
+    }, 16),
+    []
+  );
 
-  // Save chats to localStorage
+  // Save chat data to localStorage when it changes
   useEffect(() => {
     localStorage.setItem("chats", JSON.stringify(chats));
   }, [chats]);
-
-  // Save currentChatId to localStorage
   useEffect(() => {
     localStorage.setItem("currentChatId", currentChatId);
   }, [currentChatId]);
 
+  // Update time every second
   useEffect(() => {
-    // Update time every second
     const timer = setInterval(() => {
       setCurrentDateTime(formatDateTime());
     }, 1000);
-
-    // Cleanup on unmount
     return () => clearInterval(timer);
   }, []);
 
+  // Creates a title for new chats based on first message
   const generateChatTitle = (messages) => {
     if (messages.length === 0) return "ChatGenie";
     const firstUserMessage = messages.find((m) => m.isUser)?.text || "";
@@ -640,13 +672,13 @@ export default function Chat() {
     );
   };
 
+  // Manages scroll position and scroll button visibility
   const handleScroll = useCallback(
     throttle(() => {
       if (!messagesAreaRef.current) return;
       const { scrollHeight, scrollTop, clientHeight } = messagesAreaRef.current;
       const bottom = Math.abs(scrollHeight - scrollTop - clientHeight) < 50;
       setIsAtBottom(bottom);
-      // Show scroll button when not at bottom
       setShowScrollButton(!bottom);
     }, 100),
     []
@@ -660,13 +692,12 @@ export default function Chat() {
     }
   }, [handleScroll]);
 
+  // Handles user input changes and textarea resizing
   const handleInputChange = useCallback((e) => {
     setInput(e.target.value);
-    
-    // Use queueMicrotask instead of requestAnimationFrame for better performance
     queueMicrotask(() => {
       if (textareaRef.current) {
-        textareaRef.current.style.height = 'auto';
+        textareaRef.current.style.height = "auto";
         const newHeight = Math.min(textareaRef.current.scrollHeight, 200);
         if (textareaRef.current.style.height !== `${newHeight}px`) {
           textareaRef.current.style.height = `${newHeight}px`;
@@ -675,6 +706,7 @@ export default function Chat() {
     });
   }, []);
 
+  // Scrolls chat to bottom smoothly
   const scrollToBottom = useCallback(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
@@ -686,6 +718,7 @@ export default function Chat() {
     scrollToBottom();
   }, [currentChat.messages, scrollToBottom]);
 
+  // Creates a new empty chat
   const handleNewChat = () => {
     const newChat = {
       id: Date.now().toString(),
@@ -701,6 +734,7 @@ export default function Chat() {
     }
   };
 
+  // Creates a new empty chat
   const handleDeleteChat = (chatId) => {
     if (chats.length === 1) {
       handleNewChat();
@@ -718,6 +752,7 @@ export default function Chat() {
     }
   };
 
+  // Changes to a different chat
   const handleSelectChat = (chatId) => {
     setCurrentChatId(chatId);
     localStorage.setItem("currentChatId", chatId);
@@ -726,6 +761,7 @@ export default function Chat() {
     }
   };
 
+  // Handles Enter key for message submission
   const handleKeyDown = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -733,6 +769,7 @@ export default function Chat() {
     }
   };
 
+  // Processes form submission and sends message to API
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
@@ -846,6 +883,8 @@ export default function Chat() {
       setIsLoading(false);
     }
   };
+
+  // Regenerates AI response for a specific message
   const handleRegenerateResponse = async (messageId) => {
     // Find the original user message that generated this response
     const currentMessages = currentChat.messages;
@@ -878,7 +917,7 @@ export default function Chat() {
           Accept: "application/json",
         },
         body: JSON.stringify({
-          message: userMessage.text, // Send the original user message
+          message: userMessage.text,
           timestamp: formatDateTime(),
           username: username,
           regenerate: true,
@@ -938,6 +977,9 @@ export default function Chat() {
       setIsLoading(false);
     }
   };
+
+  // Main component render with sidebar, chat area, and input form
+
   return (
     <div className="main-container">
       <button

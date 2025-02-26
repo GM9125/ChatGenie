@@ -1,16 +1,17 @@
-from flask import Flask, request, jsonify
-import google.generativeai as genai
-from dotenv import load_dotenv
+# Basic imports and setup
 import os
-from flask_cors import CORS
 import re
 from datetime import datetime
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+from dotenv import load_dotenv
+import google.generativeai as genai
 
-# Load environment variables first
+# API and environment setup
 load_dotenv()
 API_KEY = os.getenv('GEMINI_API_KEY')
 
-# Then define validation functions
+# Validation functions
 def validate_environment():
     """Validate environment variables and configuration."""
     if not os.getenv('GEMINI_API_KEY'):
@@ -24,22 +25,22 @@ def validate_model_response(response):
         raise ValueError("Empty text in model response")
     return True
 
-# Now validate environment
-validate_environment()
 
-# Configure the API
+# Setting up ChatGenie
+validate_environment()
 genai.configure(api_key=API_KEY)
 
-# Enhanced generation config for Gemini 2.0 Flash
+# Enhanced model configuration for Gemini 2.0 Flash
 generation_config = {
-    "temperature": 0.7,        # Creativity vs consistency
-    "top_p": 0.8,             # Nucleus sampling
-    "top_k": 40,              # Top-k sampling
-    "max_output_tokens": 2048, # Maximum response length
-    "candidate_count": 1,      # Number of response candidates
-    "stop_sequences": [],      # No special stop sequences
+    "temperature": 0.7,        # How creative should responses be?
+    "top_p": 0.8,              # How focused should responses be?
+    "top_k": 40,               # How many options to consider
+    "max_output_tokens": 2048, # Maximum words in response
+    "candidate_count": 1,      # Number of responses to generate
+    "stop_sequences": [],      # When to stop generating
 }
 
+# Safety rules to keep conversations appropriate
 safety_settings = [
     {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
     {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
@@ -47,24 +48,7 @@ safety_settings = [
     {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
 ]
 
-# Initialize model with Gemini 2.0 Flash
-try:
-    model = genai.GenerativeModel(
-        model_name='models/gemini-2.0-flash',
-        generation_config=generation_config,
-        safety_settings=safety_settings
-    )
-
-    chat_history = {}  # Store chat history by session ID
-    # Start a new chat session
-    chat = model.start_chat(history=[])
-    print("Successfully initialized Gemini 2.0 Flash model")
-    
-except Exception as e:
-    print(f"Error initializing Gemini: {str(e)}")
-    raise
-
-# Create Flask app with enhanced CORS
+# Creates our web app and allow it to talk to the frontend
 app = Flask(__name__)
 CORS(app, resources={
     r"/chat": {
@@ -75,9 +59,25 @@ CORS(app, resources={
     }
 })
 
-def infer_language(code_line):
-    """Infer the programming language from code snippet."""
-    language_patterns = {
+# Initializing model Gemini 2.0 Flash for ChatGenie
+try:
+    model = genai.GenerativeModel(
+         model_name='models/gemini-2.0-flash',  # Which AI to use
+        generation_config=generation_config,    # How it should behave
+        safety_settings=safety_settings         # Safety rules
+    )
+
+    chat_history = {}   #Remember conversations with users
+    # Starts a new chat session
+    chat = model.start_chat(history=[])
+    print("Successfully initialized Gemini 2.0 Flash model")
+    
+except Exception as e:
+    print(f"Error initializing Gemini: {str(e)}")
+    raise
+
+# Language detection patterns for code formatting
+language_patterns = {
         'python': [
             r'^(async\s+)?def\s+\w+\s*\(',
             r'^from\s+[\w.]+\s+import\s+',
@@ -205,11 +205,11 @@ def infer_language(code_line):
             r'=>',
         ],
         'math': [
-            r'^[P\u03C1\u03B7][\s+]?[+=/*-]',  # Basic math operations with P, ρ, η
-            r'^[P\u03C1\u03B7][\d+]',          # Variables with subscripts
-            r'[\u03C1\u03B7].*[=+\-*/^]',      # Greek letters in equations
-            r'\([0-9.]+\s*[*/+-]\s*[0-9.]+\)', # Basic arithmetic
-            r'^.*\s*=\s*.*$',                   # Equations with equals sign
+            r'^[P\u03C1\u03B7][\s+]?[+=/*-]',  
+            r'^[P\u03C1\u03B7][\d+]',          
+            r'[\u03C1\u03B7].*[=+\-*/^]',      
+            r'\([0-9.]+\s*[*/+-]\s*[0-9.]+\)', 
+            r'^.*\s*=\s*.*$',                   
         ],
         'sql': [
             r'^SELECT\s+',
@@ -253,189 +253,241 @@ def infer_language(code_line):
         ]
     }
 
-    code_line = code_line.strip()
+# Content detection and formatting functions
+
+def infer_language(code_line):
+    """Infer the programming language from code snippet."""
+    code_line = code_line.strip() # Clean up any extra spaces
     
-    # First check if it's a mathematical equation
     for pattern in language_patterns['math']:
         if re.match(pattern, code_line, re.IGNORECASE):
             return 'math'
     
-    # Then check other languages
     for lang, patterns in language_patterns.items():
-        if lang != 'math':  # Skip math patterns as we already checked them
+        if lang != 'math':
             for pattern in patterns:
                 if re.match(pattern, code_line, re.IGNORECASE):
                     return lang
-
-    # If no specific language is detected, but contains equation-like content
-    if re.search(r'[=+\-*/^(){}[\]]', code_line):
-        return 'math'  # Default to math for equation-like content
-        
+    
+    # If we can't figure it out, just treat it as plain text
     return 'plaintext'
 
 def format_code_blocks(text):
-    """Format code blocks with proper language detection and syntax."""
     lines = text.split('\n')
     formatted_lines = []
-    in_code_block = False
-    current_block = []
+    in_code_block = False    
+    current_block = []     
     
     for line in lines:
         if line.startswith('```'):
             if in_code_block:
-                # End of code block
+                # We found the end of a code block
                 if current_block:
-                    # Special handling for diagrams and math
-                    if '@startuml' in current_block[0]:
-                        formatted_lines.append('```plantuml')
-                    elif 'graph' in current_block[0] or 'sequenceDiagram' in current_block[0]:
-                        formatted_lines.append('```mermaid')
-                    else:
-                        lang = infer_language(current_block[0])
-                        if lang == 'math':
-                            # Format math blocks specially
-                            formatted_lines.append('```math')
-                        else:
-                            formatted_lines.append(f'```{lang}')
-                    formatted_lines.extend(current_block)
+                    # Format the code we collected and add it
+                    formatted_lines.extend(handle_code_block(current_block))
                 formatted_lines.append('```')
                 current_block = []
                 in_code_block = False
             else:
-                # Start of code block
-                in_code_block = True
-                # Strip any existing language identifier
-                if len(line) > 3:
-                    existing_lang = line[3:].strip().lower()
-                    if existing_lang in ['plantuml', 'uml']:
-                        formatted_lines.append('```plantuml')
-                    elif existing_lang in ['mermaid']:
-                        formatted_lines.append('```mermaid')
-                    elif existing_lang in ['math', 'equation']:
-                        formatted_lines.append('```math')
-                    elif existing_lang:
-                        formatted_lines.append(f'```{existing_lang}')
-                    else:
-                        continue
-                else:
-                    continue
+                # We found the start of a code block
+                in_code_block = handle_code_block_start(line, formatted_lines)
         elif in_code_block:
+            # We're inside a code block, collect the line
             current_block.append(line)
         else:
+            # Regular text, just add it as it is
             formatted_lines.append(line)
     
-    # Handle any remaining code block
+    # If we have any unfinished code block, handle it
     if in_code_block and current_block:
-        if '@startuml' in current_block[0]:
-            formatted_lines.append('```plantuml')
-        elif 'graph' in current_block[0] or 'sequenceDiagram' in current_block[0]:
-            formatted_lines.append('```mermaid')
+        formatted_lines.extend(handle_remaining_block(current_block))
+    
+    # Join everything back together with newlines
+    return '\n'.join(formatted_lines)
+
+
+# Master formatter that applies all formatting rules
+def format_response(text):
+   
+    text = text.strip()  # Remove extra spaces at start and end
+    
+    # Apply each formatting rule in sequence
+    text = handle_math_equations(text)    # Format math equations first
+    text = format_code_blocks(text)       # Then handle code blocks
+    text = format_markdown_elements(text)  # Then markdown elements
+    text = format_tables(text)            # Then tables
+    text = format_lists(text)             # Finally, format lists
+    
+    return text
+
+
+# Handlers for different types of content blocks
+def handle_code_block(block):
+   
+    if not block:
+        return []
+    
+    # Join the code lines together
+    code_content = '\n'.join(block)
+    # Try to figure out what programming language it is
+    language = infer_language(block[0])
+    
+    # Add the right language marker
+    if language == 'math':
+        return [f"```math\n{code_content}"]              # Math equations
+    elif language in ['mermaid', 'plantuml']:
+        return [f"```{language}\n{code_content}"]        # Diagrams
+    else:
+        return [f"```{language}\n{code_content}"]
+    
+    
+def handle_code_block_start(line, formatted_lines):
+  
+    if len(line) > 3:  # If there's a language specified after ```
+        lang = line[3:].strip().lower()
+        if lang in ['plantuml', 'uml']:
+            formatted_lines.append('```plantuml')         # PlantUML diagrams
+        elif lang == 'mermaid':
+            formatted_lines.append('```mermaid')          # Mermaid diagrams
+        elif lang in ['math', 'equation']:
+            formatted_lines.append('```math')             # Math equations
+        elif lang:
+            formatted_lines.append(f"```{lang}")          # Other languages
+    return True
+
+
+def handle_remaining_block(block):
+   
+    # Check if it's a PlantUML diagram
+    if '@startuml' in block[0]:
+        return ['```plantuml'] + block
+    # Check if it's a Mermaid diagram
+    elif any(x in block[0] for x in ['graph', 'sequenceDiagram']):
+        return ['```mermaid'] + block
+    # For any other code, try to guess the language
+    else:
+        lang = infer_language(block[0])
+        return [f"```{lang}"] + block
+
+
+# Special formatters for different content types
+def handle_math_equations(text):
+
+    # Handle inline math (single $)
+    text = re.sub(r'\$([^$]+)\$', r'\\(\1\\)', text)
+    # Handle display math (double $$)
+    text = re.sub(r'\$\$([^$]+)\$\$', r'\\[\1\\]', text)
+    return text
+
+
+def format_markdown_elements(text):
+   
+    # Make headers look nice (add space after #)
+    text = re.sub(r'^(#{1,6})\s*(.*?)$', r'\1 \2\n', text, flags=re.MULTILINE)
+    
+    # Make lists consistent (convert * and + to -)
+    text = re.sub(r'^\s*[-*+]\s+(.*?)$', r'- \1', text, flags=re.MULTILINE)
+    text = re.sub(r'^\s*(\d+\.)\s+(.*?)$', r'\1 \2', text, flags=re.MULTILINE)
+    
+    # Fix blockquote spacing
+    text = re.sub(r'^>\s*(.*?)$', r'> \1', text, flags=re.MULTILINE)
+    
+    return text
+
+
+def format_tables(text):
+    
+    lines = text.split('\n')
+    in_table = False
+    formatted_lines = []
+    
+    for line in lines:
+        # Check if line is part of a table
+        if re.match(r'\|.*\|', line):
+            if not in_table:
+                in_table = True
+            formatted_lines.append(line)
+            # Add the separator row (---) after header
+            if in_table and len(formatted_lines) == 1:
+                cells = line.count('|') - 1
+                formatted_lines.append('|' + '---|' * cells)
         else:
-            lang = infer_language(current_block[0])
-            if lang == 'math':
-                formatted_lines.append('```math')
-            else:
-                formatted_lines.append(f'```{lang}')
-        formatted_lines.extend(current_block)
-        formatted_lines.append('```')
+            in_table = False
+            formatted_lines.append(line)
     
     return '\n'.join(formatted_lines)
 
 
-def format_response(text):
-    """Format the response with enhanced styling and structure."""
-    # Pre-process the text
-    text = text.strip()
-    
-    # Handle mathematical equations
-    text = re.sub(r'\\\((.*?)\\\)', r'$\1$', text)
-    text = re.sub(r'\\\[(.*?)\\\]', r'$$\1$$', text)
-    
-    # Format code blocks
-    text = format_code_blocks(text)
-    
-    # Ensure proper spacing around headers
-    text = re.sub(r'(#{1,6}\s.*?)\n', r'\1\n\n', text)
-    
-    # Ensure proper spacing around lists
-    text = re.sub(r'((?:\d+\.|\*|\-)\s+.*?)\n(?!\d+\.|\*|\-|\s)', r'\1\n\n', text)
-    
-    # Ensure proper spacing around blockquotes
-    text = re.sub(r'(>\s+.*?)\n(?!>)', r'\1\n\n', text)
-    
-    # Format inline code
-    text = re.sub(r'(?<!`)`(?!`)(.*?)(?<!`)`(?!`)', r'`\1`', text)
-    
-    # Format table separators
-    text = re.sub(r'\n\|([\-:]+\|)+\n', lambda m: '\n' + m.group(0).replace(' ', '') + '\n', text)
-    
-    # Enhanced table formatting - Fixed regex pattern
-    text = re.sub(
-        r'(\n\|.*\|)\n(\|.*\|)\n(\|.*\|(\n|$))',
-        lambda m: f"{m.group(1)}\n{m.group(2).replace(' ', '')}\n{m.group(3)}",
-        text
-    )
+def format_lists(text):
 
-    # Ensure at least 3 dashes in separator
-    text = re.sub(
-        r'(\|-+)\|(\s*)\n',
-        lambda m: f"|{'|'.join(['---' for _ in m.group(1).split('|') if _])}|\n",
-        text
-    )
+    lines = text.split('\n')
+    formatted_lines = []
+    list_indent = 0
     
-    # Ensure proper list indentation
-    text = re.sub(r'^\s*[-*+]\s', '- ', text, flags=re.MULTILINE)
-    text = re.sub(r'^\s*\d+\.\s', lambda m: f"{m.group().rstrip()} ", text, flags=re.MULTILINE)
+    for line in lines:
+        # Find list items and their indentation level
+        list_match = re.match(r'^(\s*)([-*+]|\d+\.)\s', line)
+        if list_match:
+            indent = len(list_match.group(1))
+            # Add empty line when indentation increases
+            if indent > list_indent:
+                formatted_lines.append('')
+            list_indent = indent
+        else:
+            list_indent = 0
+        formatted_lines.append(line)
     
-    return text
+    return '\n'.join(formatted_lines)
 
-@app.route('/chat', methods=['POST'])
-def chat_endpoint():
-    try:
-        data = request.json
-        print(f"\nReceived request at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        print(f"Request data: {data}")
-        
-        # Validate request data
-        if not data:
-            return jsonify({"error": "No data provided", "status": "error"}), 400
-        
-        # Extract request data
-        question = data.get('message')
-        timestamp = data.get('timestamp') or datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        username = data.get('username', 'GM9125')
-        is_regenerate = data.get('regenerate', False)
-        session_id = data.get('sessionId', str(datetime.now().timestamp()))
-        
-        if not question:
-            return jsonify({"error": "No message provided", "status": "error"}), 400
 
-        try:
-            # Get or create chat session
-            if session_id not in chat_history:
-                chat_history[session_id] = {
-                    'messages': [],
-                    'chat_instance': model.start_chat(history=[])
-                }
-            
-            current_session = chat_history[session_id]
-            
-            # Add user message to history
-            current_session['messages'].append({
-                'role': 'user',
-                'content': question,
-                'timestamp': timestamp
-            })
-            
-            # Prepare context with chat history
-            context = f"""
-Current Time: {timestamp}
-Current User: {username}
+# Chat request handlers and session management
+def validate_request(request):
+    
+    # Get the JSON data from the request
+    data = request.json
+    if not data:
+        raise ValueError("🚫 Oops! No data was sent with the request")
+    
+    # Check for the actual message
+    message = data.get('message')
+    if not message:
+        raise ValueError("📝 Hey! You need to include a message")
+    
+    # Return a nice package of all the info we need
+    return {
+        'message': message,
+        'timestamp': data.get('timestamp', datetime.now().strftime('%Y-%m-%d %H:%M:%S')),
+        'username': data.get('username', 'User'),
+        'session_id': data.get('sessionId', str(datetime.now().timestamp())),
+        'regenerate': data.get('regenerate', False)
+    }
+
+
+def get_or_create_session(data):
+    
+    session_id = data['session_id']
+    
+    # If this is a new conversation, set up a fresh chat session
+    if session_id not in chat_history:
+        chat_history[session_id] = {
+            'messages': [], # Store chat messages
+            'chat_instance': model.start_chat(history=[]) # Create new chat
+        }
+    
+    return chat_history[session_id]
+
+
+def generate_response(session, data):
+
+    # Prepare the context for the AI
+    context = f"""
+Current Time: {data['timestamp']}
+Current User: {data['username']}
 Chat History:
-{chr(10).join([f"{msg['role']}: {msg['content']}" for msg in current_session['messages'][-5:]])}
+{chr(10).join([f"{msg['role']}: {msg['content']}" for msg in session['messages'][-5:]])}
 
 Instructions: You are ChatGenie, an enhanced AI assistant developed by Ghulam Mustafa using Gemini 2.0 Flash model.
-Question: {question}
+Question: {data['message']}
 
 Response Guidelines:
 1. Structure:
@@ -461,80 +513,85 @@ Response Guidelines:
    - Clear table headers
    - 3-dash separators
 """
-            
-            # Generate response
-            response = current_session['chat_instance'].send_message(
-                context,
-                stream=False
-            )
-            
-            # Validate and format response
-            validate_model_response(response)
-            formatted_response = format_response(response.text)
-            
-            # Add bot response to history
-            current_session['messages'].append({
-                'role': 'assistant',
-                'content': formatted_response,
-                'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            })
-            
-            # Trim history if too long
-            if len(current_session['messages']) > 50:
-                current_session['messages'] = current_session['messages'][-50:]
-            
-            print(f"Generated response length: {len(formatted_response)}")
-            
-            return jsonify({
-                "response": formatted_response,
-                "timestamp": timestamp,
-                "status": "success",
-                "sessionId": session_id
-            })
-            
-        except Exception as model_error:
-            print(f"Model error: {str(model_error)}")
-            error_details = str(model_error)
-            if "quota" in error_details.lower():
-                error_message = "API quota exceeded"
-            elif "invalid" in error_details.lower():
-                error_message = "Invalid API key"
-            else:
-                error_message = f"Model error: {error_details}"
-            
-            return jsonify({
-                "error": error_message,
-                "status": "error"
-            }), 500
+    
+    # Get the AI's response and make sure it's valid
+    response = session['chat_instance'].send_message(context, stream=False)
+    validate_model_response(response)
+    
+    return response
 
+
+def format_chat_response(response, data):
+    
+    formatted_text = format_response(response.text)
+    
+    return jsonify({
+        "response": formatted_text,          # The formatted message
+        "timestamp": data['timestamp'],      # When it was created
+        "status": "success",                 # Everything worked! 🎉
+        "sessionId": data['session_id']      # Which chat this belongs to
+    })
+
+
+# Error handlers
+def handle_chat_error(error):
+   
+    print(f"💬 Chat error: {str(error)}")
+    error_message = str(error)
+    
+    # Convert technical errors into friendly messages
+    if "quota" in error_message.lower():
+        error_message = "😅 We've hit our limit for now, please try again later"
+    elif "invalid" in error_message.lower():
+        error_message = "🔑 There's an issue with the API key"
+    
+    return jsonify({
+        "error": error_message,
+        "status": "error"
+    }), 500
+
+
+# Main chat endpoint 
+@app.route('/chat', methods=['POST'])
+def chat_endpoint():
+ 
+    try:
+        # Process the chat request step by step
+        data = validate_request(request)           # Check the request
+        session = get_or_create_session(data)      # Get or create chat session
+        response = generate_response(session, data) # Generate AI response
+        return format_chat_response(response, data) # Send it back nicely formatted
+    
     except Exception as e:
-        print(f"Server error: {str(e)}")
-        return jsonify({
-            "error": f"Server error: {str(e)}",
-            "status": "error"
-        }), 500
+        return handle_chat_error(e)                # Handle any problems smoothly
 
-# Add error handler
+
+# Main chat error handlers
 @app.errorhandler(Exception)
 def handle_error(error):
-    print(f"Unhandled error: {str(error)}")
-    response = {
-        "error": "Internal server error",
+    
+    print(f"❌ Unexpected error: {str(error)}")
+    return jsonify({
+        "error": "Something went wrong, but we're on it!",
         "details": str(error),
         "status": "error"
-    }
-    return jsonify(response), 500
+    }), 500
 
 
+# Server startup
 if __name__ == '__main__':
+    
     try:
-        print(f"Starting server with Gemini 2.0 Flash model...")
-        print(f"Server time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        print(f"Debug mode: enabled")
-        print(f"Server port: 5000")
-        print(f"CORS enabled for: http://localhost:5173")
+        # Show some nice startup messages
+        print("🧞 Starting ChatGenie server...")
+        print(f"⏰ Server time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        print("🐛 Debug mode: enabled")
+        print("🚪 Server port: 5000")
+        print("🔗 CORS enabled for: http://localhost:5173")
+        
+        # Start the server
         app.run(port=5000, debug=True)
         
     except Exception as e:
-        print(f"Failed to start server: {str(e)}")
+        print(f"❌ Couldn't start server: {str(e)}")
         exit(1)

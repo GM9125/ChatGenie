@@ -1,44 +1,51 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Fira+Code&display=swap');
+/* Import fonts*/
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Fira+Code&display=swap");
 
+/* Core variables */
 :root {
-  /* Colors */
+  /* Theme colors */
   --primary-color: #6c5ce7;
   --bg-color: #ffffff;
   --text-color: #1a1a1a;
   --border-color: rgba(255, 255, 255, 0.1);
   --hover-color: #5a4fcf;
   --error-color: #dc2626;
+
+  /* Colors for gradient effects */
   --gradient-start: #4834d4;
   --gradient-end: #686de0;
-  
-  /* Layout */
+
+  /* Standard sizes for layout */
   --container-width: 1200px;
+
+  /* Rounded corner sizes */
   --border-radius-sm: 8px;
   --border-radius-md: 12px;
   --border-radius-lg: 20px;
-  
-  /* Spacing */
+
+  /* Standard spacing sizes */
   --spacing-xs: 0.4rem;
   --spacing-sm: 0.75rem;
   --spacing-md: 1rem;
   --spacing-lg: 1.25rem;
   --spacing-xl: 1.5rem;
-  
-  /* Shadows */
+
+  /* Shadow effects */
   --shadow-sm: 0 4px 15px rgba(0, 0, 0, 0.1);
   --shadow-md: 0 8px 32px rgba(31, 38, 135, 0.37);
   --shadow-accent: 0 4px 15px rgba(104, 109, 224, 0.3);
-  
+
   /* Transitions */
   --transition-fast: 0.2s ease;
   --transition-normal: 0.3s ease;
-  
+
   /* Z-index layers */
   --z-base: 1;
   --z-header: 10;
   --z-dropdown: 20;
   --z-modal: 30;
 
+  /* Color scheme for code blocks */
   --code-bg: #282a36;
   --code-text: #f8f8f2;
   --code-comment: #6272a4;
@@ -53,6 +60,7 @@
   --code-header-bg: #1e1f29;
   --code-border: #44475a;
 
+  /* Colors for syntax highlighting */
   --syntax-background: #282a36;
   --syntax-text: #f8f8f2;
   --syntax-comment: #6272a4;
@@ -65,29 +73,30 @@
   --syntax-variable: #f8f8f2;
   --syntax-property: #bd93f9;
 
+  /* Code block dimensions */
   --code-min-height: 50px;
   --code-max-height: 600px;
   --code-font-size: 0.9em;
   --code-line-height: 1.5;
-  
 }
 
-/* Reset & Base Styles */
+/* Basic reset for all elements */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
+/* Main body styling with gradient background */
 body {
-  font-family: 'Inter', sans-serif;
+  font-family: "Inter", sans-serif;
   color: var(--text-color);
   min-height: 100vh;
   line-height: 1.5;
   background: linear-gradient(125deg, #130f40 0%, #000000 100%);
 }
 
-/* Utility Classes */
+/* Container for centered content */
 .container {
   max-width: var(--container-width);
   margin: 0 auto;
@@ -95,6 +104,7 @@ body {
   padding: 0 var(--spacing-md);
 }
 
+/* Frosted glass effect for UI elements */
 .glass-effect {
   background: rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(8px);
@@ -102,23 +112,33 @@ body {
   border: 1px solid var(--border-color);
 }
 
+/* Performance optimization for animated elements */
 .animated-element {
   will-change: transform, opacity;
   transform: translateZ(0);
   backface-visibility: hidden;
 }
 
-/* Layout Components */
+/* Main chat layout container */
 .main-container {
   display: flex;
   flex-direction: column;
   height: 100vh;
   width: 100vw;
-  background: radial-gradient(circle at top right, rgba(104, 109, 224, 0.1), transparent 40%),
-              radial-gradient(circle at bottom left, rgba(72, 52, 212, 0.1), transparent 40%);
+  background: radial-gradient(
+      circle at top right,
+      rgba(104, 109, 224, 0.1),
+      transparent 40%
+    ),
+    radial-gradient(
+      circle at bottom left,
+      rgba(72, 52, 212, 0.1),
+      transparent 40%
+    );
   will-change: transform;
 }
 
+/* Main chat window with glass effect */
 .chat-container {
   composes: glass-effect;
   display: flex;
@@ -131,6 +151,7 @@ body {
   box-shadow: var(--shadow-md);
 }
 
+/* Header bar with title and controls */
 .chat-header {
   composes: glass-effect;
   padding: var(--spacing-lg);
@@ -148,12 +169,13 @@ body {
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
+/* Animated logo in header */
 .header-icon {
   composes: animated-element;
   animation: float 3s ease-in-out infinite;
 }
 
-/* Messages Area */
+/* Scrollable messages container */
 .messages-area {
   flex: 1;
   overflow-y: auto;
@@ -163,6 +185,7 @@ body {
   will-change: scroll-position;
 }
 
+/* Individual message row wrapper */
 .message-row {
   display: flex;
   padding: var(--spacing-md);
@@ -170,6 +193,7 @@ body {
   animation: messageIn var(--transition-normal) forwards;
 }
 
+/* Message content container */
 .message-content {
   max-width: var(--container-width);
   margin: 0 auto;
@@ -177,21 +201,23 @@ body {
   display: flex;
 }
 
+/* Message bubble container */
 .message-container {
   max-width: 80%;
   width: fit-content;
 }
 
-/* Message alignment */
+/* Right alignment for user messages */
 .message-row.user .message-content {
   justify-content: flex-end;
 }
 
+/* Left alignment for bot messages */
 .message-row.bot .message-content {
   justify-content: flex-start;
 }
 
-/* Message Styles */
+/* Basic message container */
 .message {
   width: 100%;
   color: #fff;
@@ -203,7 +229,7 @@ body {
   margin: 0; /* Add this */
 }
 
-
+/* Message text content */
 .message-text {
   position: relative;
   width: 100%;
@@ -212,7 +238,7 @@ body {
   word-break: break-word;
 }
 
-/* Message Actions Styles */
+/* Message action buttons container */
 .message-actions {
   display: flex;
   align-items: center;
@@ -225,29 +251,25 @@ body {
   transition: all 0.3s ease;
 }
 
-@media (max-width: 768px) {
-  .scroll-to-bottom-button {
-    bottom: 80px;
-    right: 16px;
-    width: 36px;
-    height: 36px;
-  }
-}
+/* Smooth scrolling for messages */
 .messages-area {
   scroll-behavior: smooth;
 }
 
+/* Show actions on message hover */
 .message:hover .message-actions {
   opacity: 1;
   transform: translateY(0);
 }
 
+/* Action buttons group */
 .action-group {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
+/* Individual action button */
 .action-button {
   background: transparent;
   border: none;
@@ -261,6 +283,7 @@ body {
   transition: all 0.2s ease;
 }
 
+/* Action button hover states */
 .action-button:hover {
   background: rgba(255, 255, 255, 0.1);
   color: white;
@@ -276,17 +299,19 @@ body {
   height: 18px;
 }
 
+/* Separator between action buttons */
 .action-separator {
   width: 1px;
   height: 20px;
   background: rgba(255, 255, 255, 0.1);
 }
 
+/* Copied state for action button */
 .action-button.copied {
   color: #50fa7b;
 }
 
-/* Tooltips */
+/* Tooltip styling */
 .action-button {
   position: relative;
 }
@@ -308,17 +333,24 @@ body {
   transition: all 0.2s ease;
 }
 
+/* Show tooltip on hover */
 .action-button:hover::after {
   opacity: 1;
   visibility: visible;
   transform: translateX(-50%) translateY(-5px);
 }
 
-/* Button animations */
+/* Button press animation */
 @keyframes buttonPress {
-  0% { transform: scale(1); }
-  50% { transform: scale(0.9); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.9);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 .action-button:active {
@@ -329,7 +361,7 @@ body {
   animation: buttonPress 0.2s ease;
 }
 
-/* Whitespace handling */
+/* Code formatting */
 pre,
 code {
   white-space: pre;
@@ -344,8 +376,13 @@ code {
   overflow-x: auto;
 }
 
+/* Message types */
 .user-message {
-  background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+  background: linear-gradient(
+    135deg,
+    var(--gradient-start),
+    var(--gradient-end)
+  );
   box-shadow: var(--shadow-accent);
   border-radius: var(--border-radius-md);
 }
@@ -356,7 +393,7 @@ code {
   border-radius: var(--border-radius-md);
 }
 
-/* Input Area */
+/* Input area styling */
 .input-area {
   composes: glass-effect;
   border-top: 1px solid var(--border-color);
@@ -366,6 +403,7 @@ code {
   z-index: var(--z-header);
 }
 
+/* Message input form container */
 .input-form {
   composes: container;
   display: flex;
@@ -373,6 +411,7 @@ code {
   gap: var(--spacing-sm);
 }
 
+/* Text input field styling */
 .message-input {
   flex: 1;
   padding: var(--spacing-md) var(--spacing-lg);
@@ -387,8 +426,6 @@ code {
   background: rgba(255, 255, 255, 0.05);
   color: #fff;
   box-shadow: var(--shadow-sm);
-  
-  /* Performance optimizations */
   transition: none !important;
   will-change: height;
   overflow-y: hidden;
@@ -397,6 +434,7 @@ code {
   -webkit-backface-visibility: hidden;
 }
 
+/* Input focus state */
 .message-input:focus {
   outline: none;
   border-color: rgba(255, 255, 255, 0.2);
@@ -404,13 +442,19 @@ code {
   transform: translateY(-2px);
 }
 
+/* Placeholder text */
 .message-input::placeholder {
   color: rgba(255, 255, 255, 0.5);
   transition: none;
 }
 
+/* Send button */
 .send-button {
-  background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+  background: linear-gradient(
+    135deg,
+    var(--gradient-start),
+    var(--gradient-end)
+  );
   border: none;
   color: white;
   cursor: pointer;
@@ -426,17 +470,19 @@ code {
   will-change: transform;
 }
 
+/* Send button hover state */
 .send-button:hover:not(:disabled) {
   transform: translateY(-2px) scale(1.05);
   box-shadow: 0 6px 20px rgba(104, 109, 224, 0.4);
 }
 
+/* Disabled send button */
 .send-button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-/* Loading Indicator */
+/* Bot typing indicator */
 .typing-indicator {
   display: flex;
   gap: var(--spacing-xs);
@@ -449,6 +495,7 @@ code {
   margin-right: auto;
 }
 
+/* Typing indicator dots */
 .dot {
   width: 0.5rem;
   height: 0.5rem;
@@ -458,10 +505,15 @@ code {
   will-change: transform;
 }
 
-.dot:nth-child(2) { animation-delay: 0.2s; }
-.dot:nth-child(3) { animation-delay: 0.4s; }
+/* Animation delays for dots */
+.dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
 
-/* Welcome Message */
+/* Initial welcome screen */
 .welcome-message {
   text-align: center;
   color: rgba(255, 255, 255, 0.9);
@@ -472,12 +524,13 @@ code {
   gap: var(--spacing-md);
 }
 
+/* Welcome screen icon */
 .welcome-icon {
   font-size: 2rem;
   margin-bottom: var(--spacing-sm);
 }
 
-/* Error Alert */
+/* Error message display */
 .error-alert {
   background-color: rgba(220, 38, 38, 0.1);
   border: 1px solid rgba(220, 38, 38, 0.2);
@@ -488,38 +541,51 @@ code {
   animation: slideIn 0.3s ease-out;
 }
 
-/* Markdown Styles */
-.md-h1, .md-h2, .md-h3 {
+/* Heading styles for markdown content */
+.md-h1,
+.md-h2,
+.md-h3 {
   color: #fff;
   margin: var(--spacing-md) 0 var(--spacing-sm);
   font-weight: 600;
   line-height: 1.4;
 }
 
-.md-h1 { 
+/* Main heading with bottom border */
+.md-h1 {
   font-size: 1.5rem;
   border-bottom: 1px solid var(--border-color);
   padding-bottom: var(--spacing-sm);
 }
 
-.md-h2 { font-size: 1.3rem; }
-.md-h3 { font-size: 1.1rem; }
+/* Secondary and tertiary headings */
+.md-h2 {
+  font-size: 1.3rem;
+}
+.md-h3 {
+  font-size: 1.1rem;
+}
 
+/* Paragraph spacing and line height */
 .md-p {
   margin: var(--spacing-sm) 0;
   line-height: 1.6;
 }
 
-.md-ul, .md-ol {
+/* List formatting */
+.md-ul,
+.md-ol {
   margin: var(--spacing-sm) 0;
   padding-left: var(--spacing-xl);
 }
 
+/* List item spacing */
 .md-li {
   margin: var(--spacing-xs) 0;
   line-height: 1.5;
 }
-/* Markdown element styles */
+
+/* Common styles for markdown elements */
 .md-p,
 .md-blockquote,
 .md-ul,
@@ -533,16 +599,18 @@ code {
   white-space: normal;
 }
 
+/* Inline code styling */
 .md-inline-code {
   background: rgba(255, 255, 255, 0.1);
   padding: 2px 6px;
   border-radius: 4px;
-  font-family: 'Fira Code', monospace;
+  font-family: "Fira Code", monospace;
   font-size: 0.9em;
   color: #a5b4fc;
   white-space: pre-wrap;
 }
 
+/* Code block container */
 .md-pre {
   margin: 0;
   padding: 0;
@@ -550,6 +618,7 @@ code {
   white-space: pre;
 }
 
+/* Quote block styling */
 .md-blockquote {
   border-left: 4px solid var(--primary-color);
   margin: var(--spacing-md) 0;
@@ -559,9 +628,8 @@ code {
   border-radius: 0 var(--border-radius-sm) var(--border-radius-sm) 0;
   font-style: italic;
 }
-/* Comprehensive Table Styles */
 
-/* Table Styles */
+/* Table wrapper */
 .table-container {
   margin: 1.5rem 0;
   overflow-x: auto;
@@ -570,6 +638,7 @@ code {
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+/* Basic table structure */
 .md-table {
   width: 100%;
   border-collapse: collapse;
@@ -579,10 +648,12 @@ code {
   color: rgba(255, 255, 255, 0.9);
 }
 
+/* Table header styles */
 .md-table thead {
   background: rgba(104, 109, 224, 0.2);
 }
 
+/* Table header cell styles */
 .md-table th {
   background: rgba(104, 109, 224, 0.2);
   font-weight: 600;
@@ -593,21 +664,22 @@ code {
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
+/* Table cell styles */
 .md-table td {
   padding: 0.75rem 1rem;
   border: 1px solid rgba(255, 255, 255, 0.1);
   line-height: 1.6;
 }
 
+/* Alternating row colors */
 .md-table tr:nth-child(even) {
   background: rgba(255, 255, 255, 0.02);
 }
-
 .md-table tr:hover {
   background: rgba(255, 255, 255, 0.05);
 }
 
-/* Table Cell Alignment */
+/* Cell alignment options */
 .md-table td[align="center"],
 .md-table th[align="center"] {
   text-align: center;
@@ -618,9 +690,10 @@ code {
   text-align: right;
 }
 
+/* Scroll to bottom button */
 .scroll-to-bottom-button {
   position: fixed;
-  bottom: 120.5px; /* Adjust based on your input area height */
+  bottom: 120.5px;
   right: 32px;
   width: 40px;
   height: 40px;
@@ -638,6 +711,7 @@ code {
   opacity: 0.8;
 }
 
+/* Hover effect for scroll button */
 .scroll-to-bottom-button:hover {
   transform: translateY(-2px);
   opacity: 1;
@@ -649,24 +723,7 @@ code {
   height: 20px;
 }
 
-/* Responsive Table */
-@media (max-width: 768px) {
-  .table-container {
-    margin: var(--spacing-sm) calc(-1 * var(--spacing-md));
-    width: calc(100% + (var(--spacing-md) * 2));
-    border-radius: 0;
-  }
-
-  .md-table {
-    font-size: 0.9em;
-  }
-
-  .md-table th,
-  .md-table td {
-    padding: 0.75rem;
-  }
-}
-/* Math Equations */
+/* Math formula display */
 .katex-display {
   margin: var(--spacing-md) 0 !important;
   padding: var(--spacing-sm);
@@ -685,115 +742,98 @@ code {
 .katex-inline {
   padding: 0 0.2em;
 }
-/* Animations */
-@keyframes float {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-5px); }
-  }
-  
-  @keyframes bounce {
-    0%, 60%, 100% { transform: translateY(0); }
-    30% { transform: translateY(-4px); }
-  }
-  
-  @keyframes messageIn {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-  
-  @keyframes slideIn {
-    from {
-      opacity: 0;
-      transform: translateY(-10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-  
-  /* Scrollbar Styles */
-  ::-webkit-scrollbar {
-    width: 6px;
-  }
-  
-  ::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  
-  ::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 3px;
-  }
-  
-  ::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.3);
-  }
-  
-  /* Responsive Styles */
-  @media (max-width: 640px) {
-    :root {
-      --container-width: 100%;
-      --spacing-md: 0.75rem;
-      --spacing-lg: 1rem;
-    }
-    
-    .container {
-      padding: 0;
-    }
-    
-    .chat-container {
-      border-radius: 0;
-    }
-    
-    .message-input {
-      font-size: 16px;
-    }
-  
-    .message-container {
-      max-width: 90%;
-    }
-  
-    .message {
-      padding: var(--spacing-sm);
-    }
-  }
-  
-  /* Reduced Motion */
-  @media (prefers-reduced-motion: reduce) {
-    * {
-      animation-duration: 0.01ms !important;
-      animation-iteration-count: 1 !important;
-      transition-duration: 0.01ms !important;
-      scroll-behavior: auto !important;
-    }
-  }
-  
-  /* Glass effect support */
-  @supports (backdrop-filter: blur(10px)) {
-    .chat-container,
-    .chat-header,
-    .input-area {
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-    }
-  }
-  
-  /* Dark mode support */
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --gradient-start: #4834d4;
-      --gradient-end: #686de0;
-    }
-  }
-  /* Add these new styles to your existing CSS file */
 
+/* Animation keyframes */
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes bounce {
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes messageIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Accessibility - reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Glass effect for supported browsers */
+@supports (backdrop-filter: blur(10px)) {
+  .chat-container,
+  .chat-header,
+  .input-area {
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+}
+
+/* Dark mode colors */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --gradient-start: #4834d4;
+    --gradient-end: #686de0;
+  }
+}
+
+/*Header action buttons container*/
 .header-actions {
   position: absolute;
   left: var(--spacing-lg);
@@ -801,15 +841,20 @@ code {
   gap: var(--spacing-sm);
 }
 
+/* Main header title styling */
 .header-title {
   display: flex;
   align-items: center;
   gap: var(--spacing-xs);
-  font-size: 1.75rem;  /* Increased size */
+  font-size: 1.75rem; /* Increased size */
 }
+
+/* Sparkle icon in header */
 .header-title .sparkle-star {
-  font-size: 1.9rem;  /* Match the title size */
+  font-size: 1.9rem; /* Match the title size */
 }
+
+/* Header button base styles */
 .header-button {
   background: rgba(255, 255, 255, 0.1);
   border: none;
@@ -824,19 +869,24 @@ code {
   font-size: 1.2rem;
 }
 
+/* Header button hover effect */
 .header-button:hover {
   background: rgba(255, 255, 255, 0.2);
   transform: translateY(-1px);
 }
 
+/* Chat header container */
 .chat-header {
   position: relative;
   justify-content: center !important;
 }
 
+/* Send icon sizing */
 .send-icon {
   font-size: 1.2rem;
 }
+
+/* New chat button styling */
 .new-chat-button {
   background: transparent;
   border: none;
@@ -851,11 +901,13 @@ code {
   font-size: 1.2rem;
 }
 
+/* New chat button hover effect */
 .new-chat-button:hover {
   background: rgba(255, 255, 255, 0.1);
   transform: translateY(-1px);
 }
 
+/* Sidebar header styling */
 .sidebar-header {
   padding: var(--spacing-lg);
   border-bottom: 1px solid var(--border-color);
@@ -864,9 +916,14 @@ code {
   justify-content: space-between;
   align-items: center;
 }
-/* Update the existing send-button styles */
+
+/* Send button with gradient */
 .send-button {
-  background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+  background: linear-gradient(
+    135deg,
+    var(--gradient-start),
+    var(--gradient-end)
+  );
   border: none;
   color: white;
   cursor: pointer;
@@ -882,27 +939,12 @@ code {
   will-change: transform;
 }
 
-/* Add media query for mobile responsiveness */
-@media (max-width: 640px) {
-  .header-actions {
-    position: static;
-    margin-right: var(--spacing-md);
-  }
-  
-  .chat-header {
-    justify-content: space-between !important;
-    padding: var(--spacing-md);
-  }
-  
-  .header-title {
-    margin-left: auto;
-  }
-}
-/* Chat History Styles */
+/* Chat history container */
 .chat-history-wrapper {
   position: relative;
 }
 
+/* Chat history dropdown*/
 .chat-history-popup {
   position: absolute;
   top: 100%;
@@ -919,10 +961,12 @@ code {
   box-shadow: var(--shadow-md);
 }
 
+/* Chat history list container */
 .chat-history-list {
   padding: var(--spacing-sm);
 }
 
+/* Individual chat history item */
 .chat-history-item {
   display: flex;
   align-items: center;
@@ -935,10 +979,12 @@ code {
   transition: var(--transition-normal);
 }
 
+/* Chat history item hover state */
 .chat-history-item:hover {
   background: rgba(255, 255, 255, 0.1);
 }
 
+/* Chat history item text */
 .chat-history-item span {
   flex: 1;
   overflow: hidden;
@@ -947,6 +993,7 @@ code {
   color: #fff;
 }
 
+/* Delete chat button */
 .delete-chat-button {
   background: transparent;
   border: none;
@@ -960,12 +1007,13 @@ code {
   transition: var(--transition-normal);
 }
 
+/* Delete button hover state */
 .delete-chat-button:hover {
   color: var(--error-color);
   background: rgba(255, 255, 255, 0.1);
 }
 
-/* Popup Styles */
+/* Modal overlay */
 .popup-overlay {
   position: fixed;
   top: 0;
@@ -980,6 +1028,7 @@ code {
   backdrop-filter: blur(5px);
 }
 
+/* Modal popup container */
 .popup-content {
   background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(10px);
@@ -999,6 +1048,7 @@ code {
   color: #fff;
 }
 
+/* Close button styling */
 .popup-close {
   background: transparent;
   border: none;
@@ -1010,32 +1060,30 @@ code {
   transition: var(--transition-normal);
 }
 
+/* Close button hover state */
 .popup-close:hover {
   color: #fff;
 }
 
-/* Responsive Design */
-@media (max-width: 640px) {
-  .chat-history-popup {
-    position: fixed;
-    top: 60px;
-    left: 0;
-    right: 0;
-    width: auto;
-    max-height: calc(100vh - 60px);
-    margin: 0;
-    border-radius: 0;
-  }
-}
+/* Main container layout */
 .main-container {
   position: relative;
   display: flex;
   height: 100vh;
   width: 100vw;
-  background: radial-gradient(circle at top right, rgba(104, 109, 224, 0.1), transparent 40%),
-              radial-gradient(circle at bottom left, rgba(72, 52, 212, 0.1), transparent 40%);
+  background: radial-gradient(
+      circle at top right,
+      rgba(104, 109, 224, 0.1),
+      transparent 40%
+    ),
+    radial-gradient(
+      circle at bottom left,
+      rgba(72, 52, 212, 0.1),
+      transparent 40%
+    );
 }
 
+/* Sidebar toggle button */
 .sidebar-toggle {
   position: absolute;
   left: -8px;
@@ -1054,19 +1102,23 @@ code {
   transition: var(--transition-normal);
 }
 
+/* Sidebar toggle hover effect */
 .sidebar-toggle:hover {
   background: rgba(255, 255, 255, 0.2);
 }
 
+/* Sidebar toggle icon */
 .sidebar-toggle svg {
   font-size: 1.5rem;
   transition: transform var(--transition-normal);
 }
 
+/* Rotate icon when sidebar is open */
 .sidebar-toggle svg.rotate-180 {
   transform: rotate(180deg);
 }
 
+/* Sidebar panel */
 .sidebar {
   position: fixed;
   left: -300px;
@@ -1082,22 +1134,26 @@ code {
   flex-direction: column;
 }
 
+/* Open state for sidebar */
 .sidebar.open {
   transform: translateX(300px);
 }
 
+/* Sidebar header section */
 .sidebar-header {
   padding: var(--spacing-lg);
   border-bottom: 1px solid var(--border-color);
   color: white;
 }
 
+/* Sidebar main content area */
 .sidebar-content {
   flex: 1;
   overflow-y: auto;
   padding: var(--spacing-sm);
 }
 
+/* Individual chat history item in sidebar */
 .sidebar-chat-item {
   display: flex;
   align-items: center;
@@ -1111,14 +1167,17 @@ code {
   transition: var(--transition-normal);
 }
 
+/* Hover effect for chat items */
 .sidebar-chat-item:hover {
   background: rgba(255, 255, 255, 0.1);
 }
 
+/* Active chat item */
 .sidebar-chat-item.active {
   background: rgba(104, 109, 224, 0.2);
 }
 
+/* Chat title text within items */
 .chat-title {
   flex: 1;
   overflow: hidden;
@@ -1127,29 +1186,7 @@ code {
   margin-right: var(--spacing-sm);
 }
 
-.mobile-only {
-  display: none;
-}
-
-@media (max-width: 768px) {
-  .sidebar {
-    position: fixed;
-    left: -100%;
-    width: 100%;
-  }
-
-  .sidebar.open {
-    transform: translateX(100%);
-  }
-
-  .sidebar-toggle {
-    display: none;
-  }
-
-  .mobile-only {
-    display: block;
-  }
-}
+/* User info section styling */
 .user-info {
   padding: var(--spacing-md);
   background: rgba(255, 255, 255, 0.05);
@@ -1157,6 +1194,7 @@ code {
   margin-bottom: var(--spacing-md);
 }
 
+/* User details and datetime display */
 .user-detail,
 .datetime-detail {
   display: flex;
@@ -1166,28 +1204,36 @@ code {
   font-size: 0.9rem;
   margin-bottom: var(--spacing-xs);
 }
+
+/* Datetime formatting */
 .datetime-detail .datetime {
-  font-family: 'Fira Code', monospace;
+  font-family: "Fira Code", monospace;
   font-size: 0.85rem;
   letter-spacing: -0.5px;
   color: rgba(255, 255, 255, 0.8);
 }
+
+/* User profile section */
 .user-detail svg,
 .datetime-detail svg {
   font-size: 1.1rem;
   opacity: 0.7;
 }
 
+/* Timestamp display in chat messages */
 .datetime-detail {
   font-size: 0.8rem;
   color: rgba(255, 255, 255, 0.6);
 }
 
+/* Prevents long usernames from breaking layout */
 .user-info span {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* Chat message timestamp styling */
 .datetime-detail {
   font-size: 0.85rem;
   color: rgba(255, 255, 255, 0.6);
@@ -1196,12 +1242,13 @@ code {
   gap: var(--spacing-sm);
 }
 
+/* Monospace font for timestamps */
 .datetime-detail span {
-  font-family: 'Fira Code', monospace;
+  font-family: "Fira Code", monospace;
   letter-spacing: -0.5px;
 }
 
-/* Update Code Copy Button Styles */
+/* Code copy button in code block*/
 .code-copy-button {
   position: relative; /* Changed from absolute to work better in header */
   width: 32px;
@@ -1219,29 +1266,33 @@ code {
   z-index: 10;
 }
 
+/* Hover state for copy button */
 .code-copy-button:hover {
   background: rgba(255, 255, 255, 0.1);
   color: #ffffff;
 }
 
+/* Focus state for accessibility */
 .code-copy-button:focus {
   outline: none;
   box-shadow: 0 0 0 2px var(--primary-color);
 }
 
+/* Success state after copying */
 .code-copy-button.copied {
   color: #50fa7b; /* Success green */
 }
 
+/* Animation for copy success */
 .code-copy-button.copied svg {
   animation: buttonPress var(--transition-fast);
 }
 
-/* Tooltip Styles */
+/* Tooltip popup for copy button */
 .code-copy-button::before {
   content: attr(title);
   position: absolute;
-  top: calc(-100% - 12px); /* Position above button */
+  top: calc(-100% - 12px);
   left: 50%;
   transform: translateX(-50%);
   padding: 4px 8px;
@@ -1253,15 +1304,16 @@ code {
   opacity: 0;
   visibility: hidden;
   transition: all var(--transition-fast);
-  font-family: 'Inter', sans-serif;
+  font-family: "Inter", sans-serif;
   pointer-events: none;
   z-index: 11;
 }
 
+/* Tooltip arrow */
 .code-copy-button::after {
-  content: '';
+  content: "";
   position: absolute;
-  top: -8px; /* Arrow positioning */
+  top: -8px;
   left: 50%;
   transform: translateX(-50%);
   border: 4px solid transparent;
@@ -1271,6 +1323,7 @@ code {
   transition: all var(--transition-fast);
 }
 
+/* Show tooltip on hover/focus */
 .code-copy-button:hover::before,
 .code-copy-button:focus::before,
 .code-copy-button:hover::after,
@@ -1279,32 +1332,29 @@ code {
   visibility: visible;
 }
 
-.code-copy-button:hover::before,
-.code-copy-button:focus::before {
-  transform: translateX(-50%) translateY(-2px);
-}
-
+/* Copy button tooltip animation - Shows tooltip above button */
 .code-copy-button:hover::after,
 .code-copy-button:focus::after {
   transform: translateX(-50%) translateY(-2px);
 }
 
+/* Success state colors for copy confirmation */
 .code-copy-button.copied::before {
-  background: #1a7f37; /* Green for success state */
+  background: #1a7f37;
 }
 
 .code-copy-button.copied::after {
   border-top-color: #1a7f37;
 }
 
-/* Icon Styles */
+/* Copy button icon sizing */
 .code-copy-button svg {
   width: 18px;
   height: 18px;
   transition: transform var(--transition-fast);
 }
 
-/* Selection styles */
+/* Text selection highlighting - Used in messages and code */
 ::selection {
   background-color: #008000 !important;
   color: #ffffff !important;
@@ -1317,7 +1367,7 @@ code {
   text-shadow: none !important;
 }
 
-/* Code block selection */
+/* Code block selection - Matches regular text selection */
 .md-code-block::selection,
 .md-code-block *::selection {
   background-color: #008000 !important;
@@ -1330,7 +1380,7 @@ code {
   color: #ffffff !important;
 }
 
-/* Enable text selection for message content */
+/* Enable text selection for all message content */
 .message-container,
 .message,
 .message-text,
@@ -1358,14 +1408,27 @@ th {
   pointer-events: auto !important;
 }
 
-/* Make text elements selectable by default */
-p, span, h1, h2, h3, h4, h5, h6, li, td, th, code, pre {
+/* Default text selection for markdown elements */
+p,
+span,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+li,
+td,
+th,
+code,
+pre {
   user-select: text !important;
   -webkit-user-select: text !important;
   -moz-user-select: text !important;
   -ms-user-select: text !important;
 }
 
+/* Container for code blocks */
 .code-block-wrapper {
   position: relative;
   margin: var(--spacing-sm) 0;
@@ -1378,8 +1441,7 @@ p, span, h1, h2, h3, h4, h5, h6, li, td, th, code, pre {
   flex-direction: column;
 }
 
-
-/* Code Block Header */
+/* Top bar of code block */
 .code-block-header {
   display: flex;
   justify-content: space-between;
@@ -1394,20 +1456,22 @@ p, span, h1, h2, h3, h4, h5, h6, li, td, th, code, pre {
   z-index: 10;
 }
 
+/* Main code content area */
 .code-block-content {
   position: relative;
   overflow: auto;
-  min-height: 0; 
-  flex: 1; 
-  width: 100%; 
+  min-height: 0;
+  flex: 1;
+  width: 100%;
 }
-/* Fix for syntax highlighter */
+
+/* Reset syntax highlighter margins */
 .code-block-content > div {
   margin: 0 !important;
   background: transparent !important;
 }
 
-/* Ensure proper padding for code content */
+/* Code padding and sizing */
 .code-block-content pre > code {
   padding: 1em !important;
   display: inline-block;
@@ -1415,27 +1479,32 @@ p, span, h1, h2, h3, h4, h5, h6, li, td, th, code, pre {
   box-sizing: border-box;
 }
 
+/* Code block base styles */
 .code-block-content > pre {
   margin: 0 !important;
   padding: 0 !important;
   background: transparent !important;
   min-width: 100%;
-  box-sizing: border-box; 
+  box-sizing: border-box;
 }
 
+/* Language label styling */
 .code-language {
-  font-family: 'Fira Code', monospace;
+  font-family: "Fira Code", monospace;
   font-size: 0.8em;
   color: #8bb9fe;
   opacity: 0.8;
   text-transform: capitalize;
 }
+
+/* Code font settings */
 .code-block-content :global(.prism-code) {
-  font-family: 'Fira Code', monospace !important;
+  font-family: "Fira Code", monospace !important;
   font-size: 0.9em !important;
   line-height: 1.5 !important;
 }
-/* Line number styles */
+
+/* Line number formatting */
 .code-block-content :global(.linenumber) {
   min-width: 2.5em !important;
   padding-right: 1em !important;
@@ -1445,7 +1514,7 @@ p, span, h1, h2, h3, h4, h5, h6, li, td, th, code, pre {
   margin-right: 1em !important;
 }
 
-/* Scrollbar styles for code blocks */
+/* Scrollbar styling */
 .code-block-content::-webkit-scrollbar {
   height: 6px;
   width: 6px;
@@ -1464,6 +1533,7 @@ p, span, h1, h2, h3, h4, h5, h6, li, td, th, code, pre {
   background: rgba(255, 255, 255, 0.3);
 }
 
+/* Text selection classes */
 .selectable {
   user-select: text !important;
   -webkit-user-select: text !important;
@@ -1480,23 +1550,25 @@ p, span, h1, h2, h3, h4, h5, h6, li, td, th, code, pre {
   cursor: default !important;
   pointer-events: none !important;
 }
+
+/* Markdown code block */
 .md-code-block {
   display: block;
   padding: 1em;
   margin: 0;
   overflow-x: auto;
-  font-family: 'Fira Code', monospace;
+  font-family: "Fira Code", monospace;
   font-size: 0.9em;
   line-height: 1.5;
   white-space: pre;
   color: #e5e7eb;
   background: transparent;
-  min-width: 100%; 
+  min-width: 100%;
   box-sizing: border-box;
 }
 
-/* Prevent selection for interactive elements */
-button, 
+/* Disable selection for UI elements */
+button,
 .btn-copy,
 .message-icon,
 .message-time,
@@ -1511,7 +1583,7 @@ svg,
   cursor: pointer !important;
 }
 
-/* Fix message text selection */
+/* Enable text selection in messages */
 .message-text {
   position: relative;
   width: 100%;
@@ -1524,6 +1596,7 @@ svg,
   -ms-user-select: text !important;
 }
 
+/* Enable text selection for message content */
 .message-text * {
   user-select: text !important;
   -webkit-user-select: text !important;
@@ -1531,7 +1604,7 @@ svg,
   -ms-user-select: text !important;
 }
 
-/* Fix ReactMarkdown text selection */
+/* Enable pointer events for ReactMarkdown elements */
 .message-text p,
 .message-text pre,
 .message-text code,
@@ -1542,7 +1615,7 @@ svg,
   pointer-events: auto !important;
 }
 
-/* Fix inline code selection */
+/* Style inline code snippets */
 .md-inline-code {
   user-select: text !important;
   -webkit-user-select: text !important;
@@ -1551,17 +1624,17 @@ svg,
   background: rgba(255, 255, 255, 0.1);
   padding: 2px 6px;
   border-radius: 4px;
-  font-family: 'Fira Code', monospace;
+  font-family: "Fira Code", monospace;
   font-size: 0.9em;
   color: #a5b4fc;
 }
 
-/* Fix any potential pointer-event issues */
+/* Enable message area interactions */
 .messages-area {
   pointer-events: auto !important;
 }
 
-/* Prevent selection on icons and interactive elements */
+/* Disable text selection for interactive elements */
 .message svg,
 .message button,
 .message .btn-copy {
