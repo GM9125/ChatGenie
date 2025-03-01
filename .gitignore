@@ -42,3 +42,14 @@ __pycache__/
 .Python
 *.py[cod]
 *$py.class
+
+# Testing and Coverage
+.coverage
+.pytest_cache/
+htmlcov/
+coverage.xml
+.tox/
+.nox/
+.coverage.*
+nosetests.xml
+coverage/
