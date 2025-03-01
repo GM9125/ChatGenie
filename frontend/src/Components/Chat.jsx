@@ -1,11 +1,11 @@
 import { useState, useRef, useEffect, useCallback } from "react";
+import PropTypes from "prop-types";
 import { throttle } from "lodash";
 import ReactMarkdown from "react-markdown";
 import remarkMath from "remark-math";
 import remarkGfm from "remark-gfm";
 import rehypeKatex from "rehype-katex";
 import rehypeHighlight from "rehype-highlight";
-import { debounce } from "lodash";
 import {
   RiDeleteBin6Line,
   RiChat1Line,
@@ -24,12 +24,7 @@ import {
 import "katex/dist/katex.min.css";
 import "highlight.js/styles/github-dark.css";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import {
-  oneDark,
-  oneLight,
-  dracula,
-  vscDarkPlus,
-} from "react-syntax-highlighter/dist/esm/styles/prism";
+import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 
 // Utility function to format current date and time
 const formatDateTime = () => {
@@ -42,21 +37,6 @@ const formatDateTime = () => {
   const seconds = String(now.getSeconds()).padStart(2, "0");
 
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-};
-
-// Constants for handling API request timeouts and retries
-const TYPING_TIMEOUT = 3000;
-const MAX_RETRIES = 3;
-const RETRY_DELAY = 1000;
-
-// Formats message timestamps in 24-hour format
-const formatMessageTime = (timestamp) => {
-  const date = new Date(timestamp);
-  return date.toLocaleTimeString("en-US", {
-    hour12: false,
-    hour: "2-digit",
-    minute: "2-digit",
-  });
 };
 
 // Cleans up code content by removing extra whitespace and formatting markers
@@ -227,9 +207,12 @@ const CopyButton = ({ text }) => {
   );
 };
 
+CopyButton.propTypes = {
+  text: PropTypes.string.isRequired,
+};
+
 // Displays user information and current date/time in sidebar
 const UserInfo = ({ username, currentDateTime }) => {
-  // Add local state to sync with updates
   const [localDateTime, setLocalDateTime] = useState(currentDateTime);
 
   useEffect(() => {
@@ -250,16 +233,15 @@ const UserInfo = ({ username, currentDateTime }) => {
   );
 };
 
-// Renders individual chat messages with formatting and action buttons
+UserInfo.propTypes = {
+  username: PropTypes.string.isRequired,
+  currentDateTime: PropTypes.string.isRequired,
+};
+
 const MessageBubble = ({ message, onRegenerateResponse }) => {
-  const [isCodeLoaded, setIsCodeLoaded] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
   const [isDisliked, setIsDisliked] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
-
-  useEffect(() => {
-    setIsCodeLoaded(true);
-  }, []);
 
   const handleMessageClick = (e) => {
     if (
@@ -441,6 +423,7 @@ const MessageBubble = ({ message, onRegenerateResponse }) => {
                   table: ({ children, ...props }) => {
                     const filteredProps = { ...props };
                     delete filteredProps.node;
+                    delete filteredProps.isHeader;
                     return (
                       <div className="table-container selectable">
                         <table className="md-table" {...filteredProps}>
@@ -452,6 +435,7 @@ const MessageBubble = ({ message, onRegenerateResponse }) => {
                   thead: ({ children, ...props }) => {
                     const filteredProps = { ...props };
                     delete filteredProps.node;
+                    delete filteredProps.isHeader;
                     return <thead {...filteredProps}>{children}</thead>;
                   },
                   tbody: ({ children, ...props }) => {
@@ -462,8 +446,12 @@ const MessageBubble = ({ message, onRegenerateResponse }) => {
                   th: ({ children, ...props }) => {
                     const filteredProps = { ...props };
                     delete filteredProps.node;
+                    delete filteredProps.isHeader;
                     return (
-                      <th className="md-th selectable" {...filteredProps}>
+                      <th
+                        className="md-th table-header selectable"
+                        {...filteredProps}
+                      >
                         {children}
                       </th>
                     );
@@ -585,6 +573,17 @@ const MessageBubble = ({ message, onRegenerateResponse }) => {
   );
 };
 
+MessageBubble.propTypes = {
+  message: PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    text: PropTypes.string.isRequired,
+    isUser: PropTypes.bool.isRequired,
+    timestamp: PropTypes.string.isRequired,
+  }).isRequired,
+  onRegenerateResponse: PropTypes.func.isRequired,
+  alt: PropTypes.string,
+};
+
 // Main Chat component to handle chat messages and user interactions
 export default function Chat() {
   // Load saved chats from localStorage or create default chat
@@ -619,32 +618,19 @@ export default function Chat() {
   const [error, setError] = useState(null); // Error message storage
   const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Sidebar visibility
   const [currentDateTime, setCurrentDateTime] = useState(formatDateTime()); // Current time
-  const [username] = useState("GM9125"); // User identification
+  const [username] = useState("Ghulam Mustafa"); // User identification
   const [showScrollButton, setShowScrollButton] = useState(false); // Scroll-to-bottom button visibility
 
   // References for DOM elements
   const messagesEndRef = useRef(null);
   const textareaRef = useRef(null);
   const messagesAreaRef = useRef(null);
-  const [isAtBottom, setIsAtBottom] = useState(true);
 
   // Get current chat data based on chat ID
   const currentChat =
     chats.find((chat) => chat.id === currentChatId) || chats[0];
 
   // Handles textarea auto-resize
-  const debouncedResize = useCallback(
-    debounce((element) => {
-      if (element) {
-        element.style.height = "auto";
-        const newHeight = Math.min(element.scrollHeight, 200);
-        if (element.style.height !== `${newHeight}px`) {
-          element.style.height = `${newHeight}px`;
-        }
-      }
-    }, 16),
-    []
-  );
 
   // Save chat data to localStorage when it changes
   useEffect(() => {
@@ -673,16 +659,12 @@ export default function Chat() {
   };
 
   // Manages scroll position and scroll button visibility
-  const handleScroll = useCallback(
-    throttle(() => {
-      if (!messagesAreaRef.current) return;
-      const { scrollHeight, scrollTop, clientHeight } = messagesAreaRef.current;
-      const bottom = Math.abs(scrollHeight - scrollTop - clientHeight) < 50;
-      setIsAtBottom(bottom);
-      setShowScrollButton(!bottom);
-    }, 100),
-    []
-  );
+  const handleScroll = throttle(() => {
+    if (!messagesAreaRef.current) return;
+    const { scrollHeight, scrollTop, clientHeight } = messagesAreaRef.current;
+    const bottom = Math.abs(scrollHeight - scrollTop - clientHeight) < 50;
+    setShowScrollButton(!bottom);
+  }, 100);
 
   useEffect(() => {
     const messagesArea = messagesAreaRef.current;
@@ -1051,7 +1033,7 @@ export default function Chat() {
             <div className="welcome-message">
               <span className="welcome-icon">✨</span>
               <h2 className="welcome-title">Welcome to ChatGenie</h2>
-              <p>How can I assist you today?</p>
+              <p>How can I help you today?</p>
             </div>
           )}
 

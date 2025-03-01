@@ -1,4 +1,4 @@
-import Chat from './Chat.jsx'
+import Chat from './components/Chat';
 
 function App() {
   return (
@@ -8,4 +8,4 @@ function App() {
   )
 }
 
-export default App
+export default App;
