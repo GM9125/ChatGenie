@@ -146,6 +146,17 @@ export default function Chat() {
     if (window.innerWidth < 768) setIsSidebarOpen(false);
   };
 
+  // Update chat title
+  const handleUpdateTitle = (chatId, newTitle) => {
+    setChats((prev) =>
+      prev.map((chat) =>
+        chat.id === chatId
+          ? { ...chat, title: newTitle }
+          : chat
+      )
+    );
+  };
+
   // === Message Handling ===
 
   // Update input field
@@ -366,6 +377,7 @@ export default function Chat() {
         onNewChat={handleNewChat}
         onDeleteChat={handleDeleteChat}
         onSelectChat={handleSelectChat}
+        onUpdateTitle={handleUpdateTitle} // Add this prop
         username={username}
         currentDateTime={currentDateTime}
       />

@@ -23,7 +23,6 @@ const MessageList = ({
       {/* Welcome message when no messages exist */}
       {messages.length === 0 && (
         <div className="welcome-message">
-          <span className="welcome-icon">✨</span>
           <h2 className="welcome-title">Welcome to ChatGenie</h2>
           <p>How can I help you today?</p>
         </div>

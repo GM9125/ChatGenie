@@ -517,17 +517,11 @@ code {
 .welcome-message {
   text-align: center;
   color: rgba(255, 255, 255, 0.9);
-  padding: var(--spacing-xl);
+  padding: 8rem;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: var(--spacing-md);
-}
-
-/* Welcome screen icon */
-.welcome-icon {
-  font-size: 2rem;
-  margin-bottom: var(--spacing-sm);
 }
 
 /* Error message display */
@@ -845,7 +839,7 @@ code {
 .header-title {
   display: flex;
   align-items: center;
-  gap: var(--spacing-xs);
+  gap: 0.3rem;
   font-size: 1.75rem; /* Increased size */
 }
 
@@ -1087,7 +1081,7 @@ code {
 .sidebar-toggle {
   position: absolute;
   left: -8px;
-  top: 47.5%;
+  top: 46.5%;
   transform: translateY(-50%);
   background: rgba(255, 255, 255, 0.1);
   border: none;
@@ -1646,4 +1640,15 @@ svg,
   -moz-user-select: none !important;
   -ms-user-select: none !important;
   pointer-events: auto !important;
+}
+
+/*ChatGenie logo styes*/
+.logo-image {
+  width: 32px;  
+  height: 32px;
+  object-fit: contain;
+  transform-style: preserve-3d;
+  transition: transform 0.3s ease;
+  margin-bottom: 0.30rem;
+  vertical-align: middle;
 }
