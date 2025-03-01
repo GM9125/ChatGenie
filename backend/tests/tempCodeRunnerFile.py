@@ -1,6 +1,6 @@
 import pytest
 from datetime import datetime, timedelta
-from flask import Flask, Request
+from flask import Flask
 from chat import ChatService, SESSION_TIMEOUT
 from validation import validate_model_response
 from collections import Counter
@@ -12,6 +12,14 @@ class MockGeminiModel:
         
     def generate_content(self, text):
         return MockResponse(text="Test response with proper punctuation.")
+
+class MockGeminiModelInvalid:
+    def generate_content(self, text):
+        return MockResponse(text="Invalid response without punctuation")
+
+class MockGeminiModelError:
+    def generate_content(self, text):
+        raise Exception("Model error")
 
 class MockChatInstance:
     def send_message(self, text, stream=False):
@@ -36,6 +44,16 @@ def app():
 @pytest.fixture
 def chat_service(app):
     model = MockGeminiModel()
+    return ChatService(model)
+
+@pytest.fixture
+def chat_service_invalid(app):
+    model = MockGeminiModelInvalid()
+    return ChatService(model)
+
+@pytest.fixture
+def chat_service_error(app):
+    model = MockGeminiModelError()
     return ChatService(model)
 
 def test_validate_request_success(chat_service):
@@ -93,6 +111,12 @@ def test_validate_request_full(chat_service):
     assert data["timestamp"] == "2025-03-01 12:00:00"
     assert data["session_id"] == "test-123"
     assert data["regenerate"] is True
+
+def test_validate_request_data_not_dict(chat_service):
+    """Test validation when data is not a dictionary (e.g., list)"""
+    request = MockRequest(["invalid", "data"])
+    with pytest.raises(ValueError, match="Request data must be a JSON object"):
+        chat_service.validate_request(request)
 
 def test_session_management(chat_service):
     data = {
@@ -459,10 +483,8 @@ def test_generate_response_history_formatting(chat_service):
     history = session['messages'][-7:]
     assert len(history) == 7
 
-# Updated test to cover line 75 in validate_request
 def test_validate_request_unique_exception(chat_service):
     """Test validate_request with a unique exception to cover line 75."""
-    # Create a request that raises a unique exception outside inner try block
     class CustomBrokenRequest:
         @property
         def json(self):
@@ -477,7 +499,6 @@ def test_validate_request_unique_exception(chat_service):
     assert len(chat_service.metrics['errors']) > initial_error_count
     assert "Unique validation error" in chat_service.metrics['errors']
 
-# Updated test to cover lines 81-82 in format_chat_response
 def test_format_chat_response_custom_exception(chat_service, app):
     """Test format_chat_response with a custom exception to cover lines 81-82."""
     with app.app_context():
@@ -485,21 +506,113 @@ def test_format_chat_response_custom_exception(chat_service, app):
             "session_id": "test_session",
             "timestamp": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         }
-        
-        # Create a custom response class that raises the error
-        class CustomErrorResponse:
+
+        # Custom response class that raises ValueError when text is accessed
+        class ErrorResponse:
             @property
             def text(self):
                 raise ValueError("Unique formatting error")
-        
-        response = CustomErrorResponse()
+
+        response = ErrorResponse()
         initial_error_count = len(chat_service.metrics['errors'])
-        
+
         with pytest.raises(ValueError, match="Unique formatting error"):
             chat_service.format_chat_response(response, data)
-        
+
         assert len(chat_service.metrics['errors']) > initial_error_count
         assert "Unique formatting error" in chat_service.metrics['errors']
 
-if __name__ == "__main__":
-    pytest.main(["-v", "--cov=chat", "--cov-report=term-missing", "--cov-fail-under=100"])
+def test_invalid_model_response(chat_service_invalid):
+    data = {
+        "message": "Hello",
+        "username": "TestUser",
+        "timestamp": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        "session_id": "test_session"
+    }
+    session = chat_service_invalid.get_or_create_session(data)
+    with pytest.raises(ValueError):
+        chat_service_invalid.generate_response(session, data)
+    assert "Invalid response format" in chat_service_invalid.metrics['errors']
+
+def test_model_generation_error(chat_service_error):
+    data = {
+        "message": "Hello",
+        "username": "TestUser",
+        "timestamp": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        "session_id": "test_session"
+    }
+    session = chat_service_error.get_or_create_session(data)
+    with pytest.raises(Exception, match="Model error"):
+        chat_service_error.generate_response(session, data)
+    assert "Model error" in chat_service_error.metrics['errors']
+
+def test_session_id_generation(chat_service):
+    request = MockRequest({
+        "message": "Hello",
+        "username": "TestUser",
+        "timestamp": "2025-03-01 12:00:00"
+    })
+    data = chat_service.validate_request(request)
+    assert "session_id" in data
+    assert data["session_id"] is not None
+
+def test_format_chat_response_edge_cases(chat_service, app):
+    """Test format_chat_response with various edge cases"""
+    with app.app_context():
+        data = {
+            "session_id": "test_session", 
+            "timestamp": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        }
+        
+        # Test with empty string
+        empty_response = MockResponse("")
+        response = chat_service.format_chat_response(empty_response, data)
+        assert response.json["response"] == ""
+        
+        # Test with whitespace only
+        whitespace_response = MockResponse("   ")
+        response = chat_service.format_chat_response(whitespace_response, data)
+        assert response.json["response"] == ""
+        
+        # Test with Unicode characters
+        unicode_response = MockResponse("Hello 世界")
+        response = chat_service.format_chat_response(unicode_response, data)
+        assert response.json["response"] == "Hello 世界"
+
+def test_format_chat_response_validation(chat_service, app):
+    """Test format_chat_response with response validation"""
+    with app.app_context():
+        data = {
+            "session_id": "test_session",
+            "timestamp": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        }
+
+        # Test missing session_id
+        bad_data = {"timestamp": data["timestamp"]}
+        response = MockResponse("Test")
+        with pytest.raises(KeyError):
+            chat_service.format_chat_response(response, bad_data)
+
+        # Test with None response
+        with pytest.raises(AttributeError):
+            chat_service.format_chat_response(None, data)
+
+def test_format_chat_response_error_cases(chat_service, app):
+    """Test format_chat_response error handling"""
+    with app.app_context():
+        data = {
+            "session_id": "test_session",
+            "timestamp": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        }
+
+        class CustomErrorResponse:
+            @property 
+            def text(self):
+                raise ValueError("Custom error")
+
+        response = CustomErrorResponse()
+        
+        with pytest.raises(ValueError):
+            chat_service.format_chat_response(response, data)
+        
+        assert "Custom error" in chat_service.metrics['errors']
