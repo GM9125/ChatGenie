@@ -501,5 +501,89 @@ def test_format_chat_response_custom_exception(chat_service, app):
         assert len(chat_service.metrics['errors']) > initial_error_count
         assert "Unique formatting error" in chat_service.metrics['errors']
 
+
+def test_chat_error_handling(chat_service, app):
+    """Test specific error handling in chat service"""
+    with app.app_context():
+        data = {
+            "session_id": "test_session",
+            "timestamp": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        }
+        
+        class ComplexErrorResponse:
+            @property
+            def text(self):
+                # This should trigger the specific error handling in lines 81-82
+                raise Exception("Complex error scenario")
+        
+        response = ComplexErrorResponse()
+        initial_error_count = len(chat_service.metrics['errors'])
+        
+        with pytest.raises(Exception, match="Complex error scenario"):
+            chat_service.format_chat_response(response, data)
+        
+        assert len(chat_service.metrics['errors']) > initial_error_count
+        # Verify the specific error was recorded
+        assert "Complex error scenario" in chat_service.metrics['errors']
+
+def test_format_chat_response_error_tracking(chat_service, app):
+    """Test error tracking in format_chat_response"""
+    with app.app_context():
+        data = {
+            "session_id": "test_session",
+            "timestamp": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        }
+        
+        class ErrorResponse:
+            @property
+            def text(self):
+                raise Exception("Test error")
+        
+        response = ErrorResponse()
+        initial_errors = dict(chat_service.metrics['errors'])
+        
+        try:
+            chat_service.format_chat_response(response, data)
+        except Exception as e:
+            assert str(e) == "Test error"
+            # Verify error was tracked
+            assert chat_service.metrics['errors']["Test error"] == 1
+            # Verify we only added one new error
+            assert len(chat_service.metrics['errors']) == len(initial_errors) + 1
+            return
+            
+        pytest.fail("Expected exception was not raised")
+        
+def test_format_chat_response_specific_error(chat_service, app):
+    """Test specific error handling in format_chat_response"""
+    with app.app_context():
+        data = {
+            "session_id": "test_session",
+            "timestamp": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        }
+        
+        # Create a response that will raise a specific error
+        class SpecificErrorResponse:
+            @property
+            def text(self):
+                # Force the code to go through the specific error path
+                raise AttributeError("Cannot access text property")
+            
+            def strip(self):
+                # This should never be called due to the error above
+                return "This should not be reached"
+        
+        response = SpecificErrorResponse()
+        initial_error_count = len(chat_service.metrics['errors'])
+        
+        # The error should be caught, tracked, and re-raised
+        with pytest.raises(AttributeError) as exc_info:
+            chat_service.format_chat_response(response, data)
+        
+        # Verify the error was tracked correctly
+        assert "Cannot access text property" in str(exc_info.value)
+        assert len(chat_service.metrics['errors']) > initial_error_count
+        assert chat_service.metrics['errors']["Cannot access text property"] == 1
+        
 if __name__ == "__main__":
     pytest.main(["-v", "--cov=chat", "--cov-report=term-missing", "--cov-fail-under=100"])
