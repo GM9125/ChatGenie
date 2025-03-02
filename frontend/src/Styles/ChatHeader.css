@@ -1,5 +1,3 @@
-/* src/Styles/ChatHeader.css */
-
 /* Header bar with title and controls */
 .chat-header {
     composes: glass-effect from './global.css';

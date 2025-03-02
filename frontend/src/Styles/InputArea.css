@@ -1,5 +1,3 @@
-/* src/Styles/InputArea.css */
-
 /* Input area styling */
 .input-area {
     composes: glass-effect from './global.css';
