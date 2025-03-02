@@ -1,0 +1,178 @@
+/* src/Styles/global.css */
+
+/* Import fonts */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Fira+Code&display=swap");
+
+/* Core variables */
+:root {
+  --primary-color: #6c5ce7;
+  --bg-color: #ffffff;
+  --text-color: #1a1a1a;
+  --border-color: rgba(255, 255, 255, 0.1);
+  --hover-color: #5a4fcf;
+  --error-color: #dc2626;
+  --gradient-start: #4834d4;
+  --gradient-end: #686de0;
+  --container-width: 1200px;
+  --border-radius-sm: 8px;
+  --border-radius-md: 12px;
+  --border-radius-lg: 20px;
+  --spacing-xs: 0.4rem;
+  --spacing-sm: 0.75rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.25rem;
+  --spacing-xl: 1.5rem;
+  --shadow-sm: 0 4px 15px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 8px 32px rgba(31, 38, 135, 0.37);
+  --shadow-accent: 0 4px 15px rgba(104, 109, 224, 0.3);
+  --transition-fast: 0.2s ease;
+  --transition-normal: 0.3s ease;
+  --z-base: 1;
+  --z-header: 10;
+  --z-dropdown: 20;
+  --z-modal: 30;
+  --code-bg: #282a36;
+  --code-text: #f8f8f2;
+  --code-comment: #6272a4;
+  --code-keyword: #ff79c6;
+  --code-function: #50fa7b;
+  --code-string: #f1fa8c;
+  --code-number: #bd93f9;
+  --code-operator: #ff79c6;
+  --code-class: #8be9fd;
+  --code-variable: #f8f8f2;
+  --code-property: #bd93f9;
+  --code-header-bg: #1e1f29;
+  --code-border: #44475a;
+  --syntax-background: #282a36;
+  --syntax-text: #f8f8f2;
+  --syntax-comment: #6272a4;
+  --syntax-keyword: #ff79c6;
+  --syntax-string: #f1fa8c;
+  --syntax-number: #bd93f9;
+  --syntax-function: #50fa7b;
+  --syntax-operator: #ff79c6;
+  --syntax-class: #8be9fd;
+  --syntax-variable: #f8f8f2;
+  --syntax-property: #bd93f9;
+  --code-min-height: 50px;
+  --code-max-height: 600px;
+  --code-font-size: 0.9em;
+  --code-line-height: 1.5;
+}
+
+/* Basic reset for all elements */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Main body styling with gradient background */
+body {
+  font-family: "Inter", sans-serif;
+  color: var(--text-color);
+  min-height: 100vh;
+  line-height: 1.5;
+  background: linear-gradient(125deg, #130f40 0%, #000000 100%);
+}
+
+/* Container for centered content */
+.container {
+  max-width: var(--container-width);
+  margin: 0 auto;
+  width: 100%;
+  padding: 0 var(--spacing-md);
+}
+
+/* Frosted glass effect for UI elements */
+.glass-effect {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--border-color);
+}
+
+/* Performance optimization for animated elements */
+.animated-element {
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Accessibility - reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Glass effect for supported browsers */
+@supports (backdrop-filter: blur(10px)) {
+  .chat-container,
+  .chat-header,
+  .input-area {
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+}
+
+/* Dark mode colors */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --gradient-start: #4834d4;
+    --gradient-end: #686de0;
+  }
+}
+
+/* Text selection highlighting */
+::selection {
+  background-color: #008000 !important;
+  color: #ffffff !important;
+  text-shadow: none !important;
+}
+
+::-moz-selection {
+  background-color: #008000 !important;
+  color: #ffffff !important;
+  text-shadow: none !important;
+}
+
+/* Text selection classes */
+.selectable {
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  -ms-user-select: text !important;
+  cursor: text !important;
+}
+
+.unselectable {
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  cursor: default !important;
+  pointer-events: none !important;
+}

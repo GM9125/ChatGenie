@@ -1,6 +1,7 @@
 import PropTypes from "prop-types";
 import { RiChat1Line, RiDeleteBin6Line } from "react-icons/ri";
 import UserInfo from "../components/UserInfo";
+import '../Styles/Sidebar.css';
 
 // Sidebar component handles chat history and user information display
 const Sidebar = ({

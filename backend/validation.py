@@ -64,6 +64,11 @@ def validate_chat_history(history):
     return True
 
 def validate_request_data(data):
+    # Allow empty messages for special commands
+    if not data.get('message'):
+        if data.get('command'):
+            return True
+
     # Validate request payload
     required_fields = ['message']
     optional_fields = ['timestamp', 'username', 'sessionId']

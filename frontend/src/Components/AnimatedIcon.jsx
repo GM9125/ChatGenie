@@ -1,4 +1,5 @@
 import logo from '../assets/ChatGenie-logo.png';
+import '../Styles/AnimatedIcon.css';
 
 // Animated icon component that displays the ChatGenie logo with 3D animation
 const AnimatedIcon = () => (

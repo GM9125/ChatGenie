@@ -21,6 +21,11 @@ def categorize_error(error_message: str) -> str:
             return category
     return 'unknown'
 
+# Placeholder for retry_request function.
+def retry_request(error):
+    # Implement retry logic here or integrate with your retry mechanism.
+    print("Retrying request due to error:", error)
+
 # Handle chat-specific errors with user-friendly messages
 def handle_chat_error(error):
     # Log the chat error for debugging
@@ -29,7 +34,12 @@ def handle_chat_error(error):
     
     # Map common errors to friendly messages
     if "quota" in error_message.lower():
-        error_message = "😅 We've hit our limit for now, please try again later"
+        # Queue request for retry instead of failing
+        retry_request(error)
+        return jsonify({
+            "status": "delayed",
+            "message": "Request queued for processing"
+        })
     elif "invalid" in error_message.lower():
         error_message = "🔑 There's an issue with the API key"
     elif "timeout" in error_message.lower():

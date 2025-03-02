@@ -1,6 +1,7 @@
 import PropTypes from "prop-types";
 import { RiHistoryLine } from "react-icons/ri";
 import AnimatedIcon from "./AnimatedIcon";
+import '../Styles/ChatHeader.css';
 
 /**
  * ChatHeader component displays the app title and mobile menu button

@@ -1,0 +1,91 @@
+/* src/Styles/InputArea.css */
+
+/* Input area styling */
+.input-area {
+    composes: glass-effect from './global.css';
+    border-top: 1px solid var(--border-color);
+    padding: var(--spacing-lg);
+    position: sticky;
+    bottom: 0;
+    z-index: var(--z-header);
+  }
+  
+  /* Message input form container */
+  .input-form {
+    composes: container from './global.css';
+    display: flex;
+    align-items: flex-end;
+    gap: var(--spacing-sm);
+  }
+  
+  /* Text input field styling */
+  .message-input {
+    flex: 1;
+    padding: var(--spacing-md) var(--spacing-lg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-md);
+    font-size: 1rem;
+    line-height: 1.5;
+    resize: none;
+    max-height: 200px;
+    min-height: 56px;
+    font-family: inherit;
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff;
+    box-shadow: var(--shadow-sm);
+    transition: none !important;
+    will-change: height;
+    overflow-y: hidden;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+  
+  .message-input:focus {
+    outline: none;
+    border-color: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.08);
+    transform: translateY(-2px);
+  }
+  
+  .message-input::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+    transition: none;
+  }
+  
+  /* Send button */
+  .send-button {
+    background: linear-gradient(
+      135deg,
+      var(--gradient-start),
+      var(--gradient-end)
+    );
+    border: none;
+    color: white;
+    cursor: pointer;
+    padding: var(--spacing-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--border-radius-md);
+    min-width: 56px;
+    height: 56px;
+    transition: var(--transition-normal);
+    box-shadow: var(--shadow-accent);
+    will-change: transform;
+  }
+  
+  .send-button:hover:not(:disabled) {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 6px 20px rgba(104, 109, 224, 0.4);
+  }
+  
+  .send-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  /* Send icon sizing */
+  .send-icon {
+    font-size: 1.2rem;
+  }

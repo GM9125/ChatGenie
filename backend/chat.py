@@ -2,6 +2,13 @@ from datetime import datetime
 from flask import jsonify
 from validation import validate_model_response
 from formatting import format_response
+
+
+def summarize_history(history):
+    # For simplicity, returns last 5 messages as a summary
+    if len(history) > 5:
+        return history[-5:]
+    return history
 from collections import Counter
 
 # Add constants
@@ -23,8 +30,9 @@ class ChatService:
         }
 
     def cleanup_old_sessions(self):
-        """Remove expired chat sessions."""
         current_time = datetime.now()
+        # Keep sessions alive longer
+        SESSION_TIMEOUT = 3600 * 24 # 24 hours instead of 1 hour
         initial_count = len(self.chat_history)
         
         expired_sessions = [
@@ -99,7 +107,12 @@ class ChatService:
                 raise ValueError(error_msg)
                 
             # Get chat history
-            history = session.get('messages', [])[-5:]
+            history = session.get('messages', [])[-10:] # Last 10 messages
+            
+            # Compress long messages
+            if len(history) > 5:
+                history = summarize_history(history)
+                
             history_text = chr(10).join([
                 f"{msg['role']}: {msg['content']}" 
                 for msg in history

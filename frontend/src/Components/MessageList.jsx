@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 import MessageBubble from "./MessageBubble";
+import '../Styles/MessageList.css';
 
 // Displays the list of messages and handles auto-scrolling
 const MessageList = ({

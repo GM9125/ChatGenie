@@ -2,6 +2,7 @@ import { useState } from "react";
 import PropTypes from "prop-types";
 import { RiFileCopyLine } from "react-icons/ri";
 import { cleanCodeContent } from "../utils/utils";
+import '../Styles/CopyButton.css';
 
 // Button component that copies text to clipboard with visual feedback
 const CopyButton = ({ text }) => {

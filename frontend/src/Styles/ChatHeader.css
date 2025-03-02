@@ -1,0 +1,60 @@
+/* src/Styles/ChatHeader.css */
+
+/* Header bar with title and controls */
+.chat-header {
+    composes: glass-effect from './global.css';
+    padding: var(--spacing-lg);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: center !important;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-weight: 600;
+    font-size: 1.25rem;
+    position: sticky;
+    top: 0;
+    z-index: var(--z-header);
+    color: #fff;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    position: relative;
+  }
+  
+  /* Header action buttons container */
+  .header-actions {
+    position: absolute;
+    left: var(--spacing-lg);
+    display: flex;
+    gap: var(--spacing-sm);
+  }
+  
+  /* Header button base styles */
+  .header-button {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: white;
+    cursor: pointer;
+    padding: var(--spacing-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--border-radius-sm);
+    transition: var(--transition-normal);
+    font-size: 1.2rem;
+  }
+  
+  .header-button:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-1px);
+  }
+  
+  /* Main header title styling */
+  .header-title {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 1.75rem;
+  }
+  
+  .header-title .sparkle-star {
+    font-size: 1.9rem;
+  }

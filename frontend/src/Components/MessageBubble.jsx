@@ -21,6 +21,7 @@ import {
   getLanguageName,
   formatLanguageName,
 } from "../utils/utils";
+import '../Styles/MessageBubble.css';
 
 /**
  * MessageBubble component renders individual chat messages

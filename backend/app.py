@@ -29,9 +29,9 @@ CORS(app, resources={
 limiter = Limiter(
     key_func=get_remote_address,
     app=app,
-    default_limits=["200 per day", "50 per hour"],
-    storage_uri="memory://",  # Use memory storage for development
-    strategy="fixed-window"
+    default_limits=["1000 per day", "200 per hour"], # Increased limits
+    storage_uri="memory://",
+    strategy="fixed-window-elastic-expiry" # Better strategy for bursts
 )
 
 # Add logging configuration

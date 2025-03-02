@@ -1,0 +1,193 @@
+/* src/Styles/Sidebar.css */
+
+/* Sidebar panel */
+.sidebar {
+    position: fixed;
+    left: -300px;
+    top: 0;
+    width: 300px;
+    height: 100vh;
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border-right: 1px solid var(--border-color);
+    transition: transform var(--transition-normal);
+    z-index: 90;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  /* Open state for sidebar */
+  .sidebar.open {
+    transform: translateX(300px);
+  }
+  
+  /* Sidebar header section */
+  .sidebar-header {
+    padding: var(--spacing-lg);
+    border-bottom: 1px solid var(--border-color);
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  /* Sidebar main content area */
+  .sidebar-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--spacing-sm);
+  }
+  
+  /* Individual chat history item in sidebar */
+  .sidebar-chat-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-sm);
+    margin-bottom: var(--spacing-xs);
+    border-radius: var(--border-radius-sm);
+    background: rgba(255, 255, 255, 0.05);
+    color: white;
+    cursor: pointer;
+    transition: var(--transition-normal);
+  }
+  
+  .sidebar-chat-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+  
+  .sidebar-chat-item.active {
+    background: rgba(104, 109, 224, 0.2);
+  }
+  
+  /* Chat title text within items */
+  .chat-title {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-right: var(--spacing-sm);
+  }
+  
+  /* New chat button styling */
+  .new-chat-button {
+    background: transparent;
+    border: none;
+    color: white;
+    cursor: pointer;
+    padding: var(--spacing-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--border-radius-sm);
+    transition: var(--transition-normal);
+    font-size: 1.2rem;
+  }
+  
+  .new-chat-button:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-1px);
+  }
+  
+  /* Delete chat button */
+  .delete-chat-button {
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+    padding: var(--spacing-xs);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--border-radius-sm);
+    transition: var(--transition-normal);
+  }
+  
+  .delete-chat-button:hover {
+    color: var(--error-color);
+    background: rgba(255, 255, 255, 0.1);
+  }
+  
+  /* User info section styling */
+  .user-info {
+    padding: var(--spacing-md);
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: var(--border-radius-sm);
+    margin-bottom: var(--spacing-md);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+  }
+  
+  /* User details and datetime display */
+  .user-detail,
+  .datetime-detail {
+    display: flex;
+    align-items: center;
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    gap: var(--spacing-sm);
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.9rem;
+    margin-bottom: var(--spacing-xs);
+  }
+  
+  .datetime-detail {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.6);
+    margin-bottom: 0 !important;
+  }
+  
+  .datetime-detail .datetime {
+    font-family: "Fira Code", monospace;
+    font-size: 0.85rem;
+    letter-spacing: -0.5px;
+    color: rgba(255, 255, 255, 0.8);
+  }
+  
+  .user-detail svg,
+  .datetime-detail svg {
+    font-size: 1.1rem;
+    margin-right: var(--spacing-xs);
+    opacity: 0.7;
+  }
+  
+  .user-info span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  
+  /* Sidebar toggle button */
+  .sidebar-toggle {
+    position: absolute;
+    left: -8px;
+    top: 46.5%;
+    transform: translateY(-50%);
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    border-radius: 0 var(--border-radius-sm) var(--border-radius-sm) 0;
+    padding: var(--spacing-sm);
+    color: white;
+    cursor: pointer;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition-normal);
+  }
+  
+  .sidebar-toggle:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+  
+  .sidebar-toggle svg {
+    font-size: 1.5rem;
+    transition: transform var(--transition-normal);
+  }
+  
+  .sidebar-toggle svg.rotate-180 {
+    transform: rotate(180deg);
+  }

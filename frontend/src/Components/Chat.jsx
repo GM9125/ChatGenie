@@ -6,6 +6,7 @@ import ChatHeader from "../components/ChatHeader";
 import MessageList from "../components/MessageList";
 import InputArea from "../components/InputArea";
 import { formatDateTime } from "../utils/utils";
+import '../Styles/Chat.css';
 
 /*
  * Main Chat component that manages the entire chat interface

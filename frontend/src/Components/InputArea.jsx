@@ -1,6 +1,7 @@
 import { useRef } from "react";
 import PropTypes from "prop-types";
 import { RiSendPlaneFill } from "react-icons/ri";
+import '../Styles/InputArea.css';
 
 // Handles message input and submission with auto-resizing textarea
 const InputArea = ({

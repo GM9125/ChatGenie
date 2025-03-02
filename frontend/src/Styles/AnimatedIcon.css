@@ -1,0 +1,49 @@
+/* src/Styles/AnimatedIcon.css */
+
+/* ChatGenie logo styles */
+.logo-image {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+    transform-style: preserve-3d;
+    transition: transform 0.3s ease;
+    margin-bottom: 0.30rem;
+    vertical-align: middle;
+  }
+  
+  /* Animated wrapper */
+  .animated-icon-wrapper {
+    display: inline-block;
+  }
+  
+  /* 3D animation container */
+  .animated-icon-3d {
+    position: relative;
+  }
+  
+  /* Glow effect (optional, if you want to add it) */
+  .glow-effect {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle, rgba(104, 109, 224, 0.3), transparent 70%);
+    opacity: 0.5;
+  }
+  
+  /* Animation for header icon */
+  .header-icon {
+    composes: animated-element from './global.css';
+    animation: float 3s ease-in-out infinite;
+  }
+  
+  /* Keyframe for floating effect */
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-5px);
+    }
+  }

@@ -1,0 +1,97 @@
+/* src/Styles/CopyButton.css */
+
+/* Code copy button in code block */
+.code-copy-button {
+    position: relative;
+    width: 32px;
+    height: 32px;
+    padding: 6px;
+    background: transparent;
+    border: none;
+    color: #cccccc;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all var(--transition-fast);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+  }
+  
+  .code-copy-button:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+  }
+  
+  .code-copy-button:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--primary-color);
+  }
+  
+  .code-copy-button.copied {
+    color: #50fa7b;
+  }
+  
+  .code-copy-button.copied svg {
+    animation: buttonPress var(--transition-fast);
+  }
+  
+  .code-copy-button::before {
+    content: attr(title);
+    position: absolute;
+    top: calc(-100% - 12px);
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 4px 8px;
+    background: rgba(0, 0, 0, 0.9);
+    color: #ffffff;
+    font-size: 12px;
+    border-radius: 4px;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: all var(--transition-fast);
+    font-family: "Inter", sans-serif;
+    pointer-events: none;
+    z-index: 11;
+  }
+  
+  .code-copy-button::after {
+    content: "";
+    position: absolute;
+    top: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 4px solid transparent;
+    border-top-color: rgba(0, 0, 0, 0.9);
+    opacity: 0;
+    visibility: hidden;
+    transition: all var(--transition-fast);
+  }
+  
+  .code-copy-button:hover::before,
+  .code-copy-button:focus::before,
+  .code-copy-button:hover::after,
+  .code-copy-button:focus::after {
+    opacity: 1;
+    visibility: visible;
+  }
+  
+  .code-copy-button:hover::after,
+  .code-copy-button:focus::after {
+    transform: translateX(-50%) translateY(-2px);
+  }
+  
+  .code-copy-button.copied::before {
+    background: #1a7f37;
+  }
+  
+  .code-copy-button.copied::after {
+    border-top-color: #1a7f37;
+  }
+  
+  .code-copy-button svg {
+    width: 18px;
+    height: 18px;
+    transition: transform var(--transition-fast);
+  }
